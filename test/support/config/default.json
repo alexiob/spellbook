@@ -1,0 +1,13 @@
+{
+  "env": "default",
+  "default": "default",
+  "overwritten": "default",
+  "deep": {
+    "structure": {
+      "to": {
+        "merge": "default"
+      }
+    }
+  },
+  "null": null
+}
