@@ -26,6 +26,8 @@ defmodule SpellbookTest do
     assert Spellbook.config_get(config, "null") == nil
     assert Spellbook.config_get(config, "deep.structure.added_by") == "dev"
     assert Spellbook.config_get(config, "from.yaml") == true
+    assert Spellbook.config_get(config, "deep.structure.env.json") != "PATH"
+    assert Spellbook.config_get(config, "deep.structure.env.yaml") != "USER"
   end
 
   test "load_config with custom filename and extra filename format" do

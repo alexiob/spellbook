@@ -1,9 +1,10 @@
 defmodule Spellbook do
-  @default_config_name "config"
+  @default_config_filename "config"
+  @default_env_filename "custom-env-variables"
 
   defstruct [
     filename_formats: [],
-    extensions: ["json", "yaml"],
+    extensions: %{},
     vars: %{
       env: nil,
     },
@@ -24,6 +25,16 @@ defmodule Spellbook do
   end
   defp deep_resolve(_key, _left, right) do
     right
+  end
+
+  def substitute_vars(config = %{}, vars = %{}) do
+    Map.merge(config, config, fn (key, config, _config) -> substitute_vars_resolve(key, config, vars) end)
+  end
+  defp substitute_vars_resolve(_key, config = %{}, vars) do
+    substitute_vars(config, vars)
+  end
+  defp substitute_vars_resolve(_key, config, vars) do
+    Map.get(vars, config, config)
   end
 
   defp get_hostnames() do
@@ -47,14 +58,14 @@ defmodule Spellbook do
     end
 
     vars = case Keyword.has_key?(vars, :config_filename) do
-      false -> [{:config_filename, @default_config_name}] ++ vars
+      false -> [{:config_filename, @default_config_filename}] ++ vars
       true -> vars
     end
 
     Map.put(params, :vars, vars)
   end
 
-  def config_get(config=%{}, key) do
+  def config_get(config = %{}, key) do
     DotNotes.get(config, key)
   end
 
@@ -79,23 +90,23 @@ defmodule Spellbook do
 
   # FILE LIST GENERATOR
   def generate(spellbook) do
-    generate(spellbook, config_filename: @default_config_name)
+    generate(spellbook, config_filename: @default_config_filename)
   end
   def generate(spellbook, nil) do
     generate(spellbook)
   end
-  def generate(spellbook=%Spellbook{}, params=%{}) do
-    params = Map.merge(%{config_filename: @default_config_name, vars: %{}}, params)
+  def generate(spellbook = %Spellbook{}, params = %{}) do
+    params = Map.merge(%{config_filename: @default_config_filename, vars: %{}}, params)
     |> set_config_name()
 
     merged_vars = Map.merge(Map.get(spellbook, :vars), Map.new(Map.get(params, :vars, %{})))
     |> Map.to_list()
     |> Enum.filter(fn(v) -> !is_nil(elem(v, 1)) end)
 
-    Enum.flat_map(spellbook.filename_formats,
+    config_files = Enum.flat_map(spellbook.filename_formats,
       fn(f) ->
         Enum.map(spellbook.extensions,
-          fn(e) ->
+          fn({e, _}) ->
             merged_vars = Keyword.put(merged_vars, :ext, e)
 
             try do
@@ -115,19 +126,21 @@ defmodule Spellbook do
       end
     )
     |> Enum.filter(&(!is_nil(&1)))
+
+    {config_files, params}
   end
 
   # VARIABLES
-  def set_vars(spellbook=%Spellbook{}, values) when is_nil(values) do
+  def set_vars(spellbook = %Spellbook{}, values) when is_nil(values) do
     spellbook
   end
-  def set_vars(spellbook=%Spellbook{}, values) when is_list(values) do
+  def set_vars(spellbook = %Spellbook{}, values) when is_list(values) do
     Enum.reduce(values, spellbook, fn(value, spellbook) -> set_var(spellbook, value) end)
   end
-  def set_var(spellbook=%Spellbook{}, {name, value}) do
+  def set_var(spellbook = %Spellbook{}, {name, value}) do
     set_var(spellbook, name, value)
   end
-  def set_var(spellbook=%Spellbook{}, name, value) do
+  def set_var(spellbook = %Spellbook{}, name, value) do
     Map.put(spellbook, :vars, Map.put(Map.get(spellbook, :vars), name, value))
   end
 
@@ -142,6 +155,18 @@ defmodule Spellbook do
     Map.put(spellbook, :options, Map.merge(Map.get(spellbook, :options), options))
   end
 
+  # EXTENSIONS
+  def register_default_extensions(spellbook = %Spellbook{}) do
+    default_extensions = %{
+      "json" => Spellbook.Parser.JSON,
+      "yaml" => Spellbook.Parser.YAML,
+    }
+    register_extensions(spellbook, default_extensions)
+  end
+  def register_extensions(spellbook = %Spellbook{}, extensions = %{}) do
+    Map.put(spellbook, :extensions, Map.merge(spellbook.extensions, extensions))
+  end
+
   # DEFAULT CONFIG FOLDER
   def default_config_folder(params) when is_list(params) do
     default_config_folder(%Spellbook{}, Map.new(params))
@@ -149,7 +174,7 @@ defmodule Spellbook do
   def default_config_folder(params) when is_map(params) do
     default_config_folder(%Spellbook{}, params)
   end
-  def default_config_folder(spellbook=%Spellbook{} \\ %Spellbook{}, params \\ %{}) do
+  def default_config_folder(spellbook = %Spellbook{} \\ %Spellbook{}, params \\ %{}) do
     {full_hostname, short_hostname} = get_hostnames()
 
     params = set_config_name(params)
@@ -180,16 +205,17 @@ defmodule Spellbook do
     |> set_vars([full_hostname: full_hostname, short_hostname: short_hostname])
     |> set_vars(params[:vars])
     |> set_options(params[:options])
+    |> register_default_extensions
   end
 
   # DEFAULT CONFIG
   def default_config(params) when is_list(params) do
     default_config(%Spellbook{}, Map.new(params))
   end
-  def default_config(params) when is_map(params) do
-    default_config(%Spellbook{}, params)
-  end
-  def default_config(spellbook=%Spellbook{} \\ %Spellbook{}, params \\ %{}) do
+  # def default_config(params) when is_map(params) do
+  #   default_config(%Spellbook{}, params)
+  # end
+  def default_config(spellbook = %Spellbook{} \\ %Spellbook{}, params \\ %{}) do
     {full_hostname, short_hostname} = get_hostnames()
 
     params = set_config_name(params)
@@ -199,11 +225,13 @@ defmodule Spellbook do
       "#{config_filename}.#{ext}",
       "#{config_filename}-#{instance}.#{ext}",
       "#{config_filename}-#{env}.#{ext}",
+      "#{config_filename}-#{short_hostname}-#{env}-#{instance}.#{ext}",
       "#{config_filename}-#{full_hostname}-#{env}-#{instance}.#{ext}"
     ])
     |> set_vars([full_hostname: full_hostname, short_hostname: short_hostname])
     |> set_vars(params[:vars])
     |> set_options(params[:options])
+    |> register_default_extensions
   end
 
   # CONFIGURATION LOADING
@@ -211,7 +239,7 @@ defmodule Spellbook do
     default_config_folder(params)
     |> load_config(params)
   end
-  def load_config_folder(spellbook=%Spellbook{}, params=%{}) do
+  def load_config_folder(spellbook = %Spellbook{}, params = %{}) do
     spellbook
     |> set_vars(params[:vars])
     |> set_options(params[:options])
@@ -222,49 +250,76 @@ defmodule Spellbook do
     Spellbook.default_config()
     |> Spellbook.load_config(params)
   end
-  def load_config(spellbook=%Spellbook{}, params) when is_list(params) do
+  def load_config(spellbook = %Spellbook{}, params) when is_list(params) do
     load_config(spellbook, Map.new(params))
   end
-  def load_config(spellbook=%Spellbook{}, params=%{}) do
-    config_files = generate(spellbook, params)
+  def load_config(spellbook = %Spellbook{}, params = %{}) do
+    # load and merge available config files
+    {config_files, params} = generate(spellbook, params)
     config_folder = Map.get(params, :folder, __DIR__)
 
-    {_, config} = Enum.map_reduce(config_files, %{}, &(load_and_merge_config_file(Path.join(config_folder, &1), &2)))
+    {_, config} = Enum.map_reduce(
+      config_files,
+      %{},
+      &(load_and_merge_config_file(
+        spellbook,
+        to_string(Path.join(config_folder, &1)),
+        &2)
+      )
+    )
 
+    # merge optional :config data
     config = case Map.get(params, :config) do
       data when is_map(data) -> deep_merge(config, data)
       data when is_list(data) -> deep_merge(config, Map.new(data))
       nil -> config
     end
 
-    #TODO: merge ENV vars from <FOLDER>/<CONFIG_FILENAME>-env-variables.<EXT>
-    #TODO: merge CLI parameters from <FOLDER>/<CONFIG_FILENAME>-cli-variables.<EXT>
+    # load and merge optional ENV vars from <FOLDER>/custom-env-variables.<EXT>
+    config = load_and_merge_env_variables_file(spellbook, params, config)
+
+    #TODO: load merge optional CLI parameters defined in <FOLDER>/<CONFIG_FILENAME>-cli-variables.<EXT>
 
     config
   end
 
-  def load_and_merge_config_file(filename, config=%{}) do
-    result = case File.read(filename) do
+  # ENVIRONMENT VARIABLES
+  defp load_and_merge_env_variables_file(spellbook = %Spellbook{}, params, config) do
+    config_folder = Map.get(params, :folder, __DIR__)
+    config_env_filename = Map.get(params, :env_filename, @default_env_filename)
+
+    # scan all supported extensions
+    {_, config} = Enum.map_reduce(spellbook.extensions, config,
+      fn({ext, _}, config) ->
+        filename = Path.join(config_folder, "#{config_env_filename}.#{ext}")
+
+        case load_config_file(spellbook, filename) do
+          {:ok, data} ->
+            env_config = substitute_vars(data, System.get_env())
+            {filename, deep_merge(config, env_config)}
+          {:error, _} -> {filename, config}
+        end
+      end
+    )
+
+    config
+  end
+
+  defp load_and_merge_config_file(spellbook = %Spellbook{}, filename, config = %{}) do
+    load_config_file(spellbook, filename)
+    |> merge_config_file_result(filename, config)
+  end
+
+  defp load_config_file(spellbook = %Spellbook{}, filename) do
+    case File.read(filename) do
       {:ok, data} ->
-        case Path.extname(filename) do
-          ".json" ->
-            case Poison.decode(data) do
-              {:ok, data} -> {:ok, data}
-              {:error, reason} ->
-                reason = "#{to_string(elem(reason, 0))} '#{elem(reason, 1)}'"
-                Logger.debug("Error decoding '#{filename}': #{reason}")
-                {:error, reason}
-            end
-          ".yaml" ->
-            try do
-              data = YamlElixir.read_from_string(data)
-              {:ok, data}
-            catch
-              _, {_, [reason | _]} ->
-                {_, :error, reason, _, _, _, _, _} = reason
-                Logger.debug("Error decoding '#{filename}': #{reason}")
-                {:error, reason}
-            end
+        ext = String.downcase(String.trim_leading(Path.extname(filename), "."))
+        case Map.get(spellbook.extensions, ext) do
+          parser when not is_nil(parser) ->
+            apply(parser, :parse, [data])
+          nil ->
+            Logger.debug("Error loading '#{filename}': unsupported file format")
+            {:error, "unsupported file format"}
         end
       {:error, reason} ->
         case reason do
@@ -273,7 +328,9 @@ defmodule Spellbook do
         end
         {:error, reason}
     end
+  end
 
+  defp merge_config_file_result(result, filename, config = %{}) do
     case result do
       {:ok, data} -> {filename, deep_merge(config, data)}
       {:error, _} -> {filename, config}

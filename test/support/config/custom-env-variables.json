@@ -1,0 +1,9 @@
+{
+  "deep": {
+    "structure": {
+      "env": {
+        "json": "PATH"
+      }
+    }
+  }
+}

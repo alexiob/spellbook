@@ -1,0 +1,4 @@
+deep:
+  structure:
+    env:
+      json: "USER"
