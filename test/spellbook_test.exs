@@ -4,6 +4,13 @@ defmodule SpellbookTest do
   doctest Spellbook
 
   test "load_config_folder without config" do
+    config = Spellbook.load_config_folder()
+
+    assert is_map(config)
+    assert length(Map.keys(config)) == 0
+  end
+
+  test "load_config_folder with simple config" do
     config = Spellbook.load_config_folder(
       vars: [instance: 0, brand: "alexiob", env: "dev"]
     )

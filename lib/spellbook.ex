@@ -50,10 +50,9 @@ defmodule Spellbook do
   end
 
   defp set_config_name(params) when is_map(params) do
-    vars = params[:vars] || []
-
+    vars = Map.get(params, :vars, Keyword.new())
     vars = case Map.has_key?(params, :config_filename) do
-      true -> [{:config_filename, Map.get(params, :config_filename)}] ++ vars
+      true -> Keyword.put_new(vars, :config_filename, Map.get(params, :config_filename))
       false -> vars
     end
 
@@ -96,10 +95,10 @@ defmodule Spellbook do
     generate(spellbook)
   end
   def generate(spellbook = %Spellbook{}, params = %{}) do
-    params = Map.merge(%{config_filename: @default_config_filename, vars: %{}}, params)
+    params = Map.merge(%{config_filename: @default_config_filename, vars: Keyword.new()}, params)
     |> set_config_name()
 
-    merged_vars = Map.merge(Map.get(spellbook, :vars), Map.new(Map.get(params, :vars, %{})))
+    merged_vars = Map.merge(Map.get(spellbook, :vars), Map.new(Map.get(params, :vars, Keyword.new())))
     |> Map.to_list()
     |> Enum.filter(fn(v) -> !is_nil(elem(v, 1)) end)
 
@@ -235,7 +234,7 @@ defmodule Spellbook do
   end
 
   # CONFIGURATION LOADING
-  def load_config_folder(params) do
+  def load_config_folder(params \\ %{}) do
     default_config_folder(params)
     |> load_config(params)
   end
@@ -256,8 +255,9 @@ defmodule Spellbook do
   def load_config(spellbook = %Spellbook{}, params = %{}) do
     # load and merge available config files
     {config_files, params} = generate(spellbook, params)
-    config_folder = Map.get(params, :folder, __DIR__)
+    config_folder = Map.get(params, :folder, Path.join(System.cwd() || __DIR__, "config"))
 
+    # load data from files and merge it
     {_, config} = Enum.map_reduce(
       config_files,
       %{},
@@ -269,6 +269,7 @@ defmodule Spellbook do
     )
 
     # merge optional :config data
+    # TODO: is this in the right position in the code? What should be the priority of this config?
     config = case Map.get(params, :config) do
       data when is_map(data) -> deep_merge(config, data)
       data when is_list(data) -> deep_merge(config, Map.new(data))
@@ -285,7 +286,7 @@ defmodule Spellbook do
 
   # ENVIRONMENT VARIABLES
   defp load_and_merge_env_variables_file(spellbook = %Spellbook{}, params, config) do
-    config_folder = Map.get(params, :folder, __DIR__)
+    config_folder = Map.get(params, :folder, Path.join(System.cwd() || __DIR__, "config"))
     config_env_filename = Map.get(params, :env_filename, @default_env_filename)
 
     # scan all supported extensions
