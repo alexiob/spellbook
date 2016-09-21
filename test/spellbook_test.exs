@@ -30,11 +30,11 @@ defmodule SpellbookTest do
     assert Map.has_key?(config, "env")
     assert Map.get(config, "env") == "dev"
     assert Map.get(config, "overwritten") == "local"
-    assert Spellbook.config_get(config, "null") == nil
-    assert Spellbook.config_get(config, "deep.structure.added_by") == "dev"
-    assert Spellbook.config_get(config, "from.yaml") == true
-    assert Spellbook.config_get(config, "deep.structure.env.json") != "PATH"
-    assert Spellbook.config_get(config, "deep.structure.env.yaml") != "USER"
+    assert Spellbook.get(config, "null") == nil
+    assert Spellbook.get(config, "deep.structure.added_by") == "dev"
+    assert Spellbook.get(config, "from.yaml") == true
+    assert Spellbook.get(config, "deep.structure.env.json") != "PATH"
+    assert Spellbook.get(config, "deep.structure.env.yaml") != "USER"
   end
 
   test "load_config with custom filename and extra filename format" do
@@ -42,13 +42,13 @@ defmodule SpellbookTest do
     |> Spellbook.add_filename_format("clients/#{brand}.#{ext}")
     |> Spellbook.load_config(
       folder: "./test/support/brand",
-      config_filename: "brand",
-      vars: [instance: "1", brand: "elixir"]
+      config_filename: "brand-conf",
+      vars: [instance: "job-processor", brand: "elixir", env: "dev", short_hostname: "worker"]
     )
 
     assert is_map(config)
-    assert Spellbook.config_get(config, "name") == "elixir"
-    assert Spellbook.config_get(config, "description") == "A real brand"
+    assert Spellbook.get(config, "name") == "elixir"
+    assert Spellbook.get(config, "description") == "A real brand"
   end
 
   test "load_config with standard filename" do
@@ -58,7 +58,7 @@ defmodule SpellbookTest do
     )
 
     assert is_map(config)
-    assert Spellbook.config_get(config, "name") == "config"
+    assert Spellbook.get(config, "name") == "config"
   end
 
   test "load_config with standard filename and custom Spellbook" do
@@ -69,7 +69,7 @@ defmodule SpellbookTest do
     )
 
     assert is_map(config)
-    assert Spellbook.config_get(config, "name") == "config"
+    assert Spellbook.get(config, "name") == "config"
   end
 
   test "load_config with standard filename and custom config argument" do
@@ -80,6 +80,6 @@ defmodule SpellbookTest do
     )
 
     assert is_map(config)
-    assert Spellbook.config_get(config, "name") == "custom"
+    assert Spellbook.get(config, "name") == "custom"
   end
 end
