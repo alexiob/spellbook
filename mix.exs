@@ -74,7 +74,7 @@ defmodule Spellbook.Mixfile do
       licenses: ["MIT"],
       links: %{
         "GitHub" => "https://github.com/alexiob/spellbook",
-        "Docs"   => "http://github.com/alexiob/spellbook"
+        "Docs"   => "https://hexdocs.pm/spellbook/api-reference.html"
       }
     ]
   end
