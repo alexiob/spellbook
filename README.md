@@ -164,7 +164,7 @@ Some situations rely heavily on environment variables to configure secrets and s
 ```json
 {
   "database": {
-    "username": "DB_USERNAME"
+    "username": "DB_USERNAME",
     "password": "DB_PASSWORD"
   }
 }
