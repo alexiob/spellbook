@@ -30,9 +30,10 @@ defmodule Spellbook.Mixfile do
       {:credo, "~> 0.4", only: [:dev]},
       # {:dialyze, "~> 0.2.1", only: [:dev]},
       {:dialyxir, "~> 0.3", only: [:dev]},
-      {:mr_t, "~> 0.5.0", only: [:test, :dev]}, # instant code-reloader and test runner
+      {:mr_t, "~> 0.6.0", only: [:test, :dev]}, # instant code-reloader and test runner
       {:ex_doc, "~> 0.13", only: [:dev, :docs]},
       {:ex_doc_dash, "~> 0.2", only: :docs},
+      {:inch_ex, only: :docs},
 
       {:poison, "~> 2.2"}, # pure Elixir JSON library
 
@@ -59,8 +60,8 @@ defmodule Spellbook.Mixfile do
 
   defp description do
     """
-    Provides convenient way to load application configuration from config files,
-    environment variables, HTTP servers and modules.
+    Provides dynamic hierarchical configurations loading from config files and
+    environment variables.
     """
   end
 

@@ -10,7 +10,8 @@
   "fuse": {:hex, :fuse, "2.4.0", "499ab65d3b1d291909973e1c25bdc55a17379fb26899f25eb68b6437a880de1b", [:rebar, :make], []},
   "httpotion": {:hex, :httpotion, "3.0.1", "6165e7fe4052dfeadd4b480e4ed6619975242ac91d577e4868af92613f9e99df", [:mix], [{:ibrowse, "~> 4.2", [hex: :ibrowse, optional: false]}]},
   "ibrowse": {:hex, :ibrowse, "4.2.2", "b32b5bafcc77b7277eff030ed32e1acc3f610c64e9f6aea19822abcadf681b4b", [:rebar3], []},
-  "mr_t": {:hex, :mr_t, "0.5.8", "6c5e9cfbafe4b67fed3f235a57f213e24187e6711dbfcfd0b9237f7329b3ccd5", [:mix], [{:exfswatch, "~> 0.2.1", [hex: :exfswatch, optional: false]}]},
+  "inch_ex": {:hex, :inch_ex, "0.5.3", "39f11e96181ab7edc9c508a836b33b5d9a8ec0859f56886852db3d5708889ae7", [:mix], [{:poison, "~> 1.5 or ~> 2.0", [hex: :poison, optional: false]}]},
+  "mr_t": {:hex, :mr_t, "0.6.0", "2f2df2452fa1010f4104fb533835704808eadf8df5bd456566cf96f3efe2450d", [:mix], [{:exfswatch, "~> 0.2.1", [hex: :exfswatch, optional: false]}]},
   "poison": {:hex, :poison, "2.2.0", "4763b69a8a77bd77d26f477d196428b741261a761257ff1cf92753a0d4d24a63", [:mix], []},
   "yamerl": {:hex, :yamerl, "0.3.2", "9eac1537d251e926f47763ab1db0d9e6e8f2397646c290d58aa6ceebc6832fb7", [:rebar3], []},
   "yaml_elixir": {:hex, :yaml_elixir, "1.2.0", "6b7a1d82f00d536831f5f1dfa2aad4f71138059336e513efefdb5f9c20ddb281", [:mix], []}}
