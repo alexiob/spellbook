@@ -73,8 +73,7 @@ defmodule Spellbook.Mixfile do
       maintainers: ["Alessandro Iob <alessandro.iob@gmail.com>"],
       licenses: ["MIT"],
       links: %{
-        "GitHub" => "https://github.com/alexiob/spellbook",
-        "Docs"   => "https://hexdocs.pm/spellbook/api-reference.html"
+        "GitHub" => "https://github.com/alexiob/spellbook"
       }
     ]
   end
