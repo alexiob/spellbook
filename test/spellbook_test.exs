@@ -52,7 +52,7 @@ defmodule SpellbookTest do
   end
 
   test "load_config with standard filename" do
-    config = Spellbook.load_config(
+    config = Spellbook.load_default_config(
       folder: "./test/support/brand",
       vars: [instance: "2"]
     )
@@ -73,7 +73,7 @@ defmodule SpellbookTest do
   end
 
   test "load_config with standard filename and custom config argument" do
-    config = Spellbook.load_config(
+    config = Spellbook.load_default_config(
       folder: "./test/support/brand",
       vars: [instance: "3"],
       config: [{"name", "custom"}]
