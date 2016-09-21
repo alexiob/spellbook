@@ -1,4 +1,8 @@
 defmodule Spellbook.Parser.JSON do
+  @moduledoc """
+  JSON data parser.
+  """
+
   def parse(data) do
     case Poison.decode(data) do
       {:ok, data} -> {:ok, data}

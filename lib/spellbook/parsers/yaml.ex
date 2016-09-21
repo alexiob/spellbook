@@ -1,4 +1,8 @@
 defmodule Spellbook.Parser.YAML do
+  @moduledoc """
+  YAML data parser.
+  """
+
   def parse(data) do
     try do
       data = YamlElixir.read_from_string(data)

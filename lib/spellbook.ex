@@ -1,4 +1,8 @@
 defmodule Spellbook do
+  @moduledoc """
+  Provides dynamic hierarchical configurations loading for your application.
+  """
+
   @default_config_filename "config"
   @default_env_filename "custom-env-variables"
 
@@ -6,7 +10,7 @@ defmodule Spellbook do
     filename_formats: [],
     extensions: %{},
     vars: %{
-      env: nil,
+      env: "dev",
     },
     options: %{
       ignore_invalid_filename_formats: true,
@@ -17,6 +21,14 @@ defmodule Spellbook do
 
   # UTILITIES
 
+  @doc """
+  Performs a deep merge of two maps.
+
+  ## Examples
+      iex> Spellbook.deep_merge(%{"a" => %{"b" => "1", "c" => [1,2,3]}}, %{"a" => %{"b" => "X"}})
+      %{"a" => %{"b" => "X", "c" => [1, 2, 3]}}
+  """
+  @spec deep_merge(left :: Map, right :: Map) :: Map
   def deep_merge(left, right) do
     Map.merge(left, right, &deep_resolve/3)
   end
@@ -27,6 +39,14 @@ defmodule Spellbook do
     right
   end
 
+  @doc """
+  Performs a deep substitution of variables used as map values.
+
+  ## Examples
+      iex> Spellbook.substitute_vars(%{"a" => %{"b" => "VAR", "c" => "NOT_A_VAR"}}, %{"VAR" => "spellbook"})
+      %{"a" => %{"b" => "spellbook", "c" => "NOT_A_VAR"}}
+  """
+  @spec substitute_vars(config :: Map, vars :: Map) :: Map
   def substitute_vars(config = %{}, vars = %{}) do
     Map.merge(config, config, fn (key, config, _config) -> substitute_vars_resolve(key, config, vars) end)
   end
@@ -64,7 +84,7 @@ defmodule Spellbook do
     Map.put(params, :vars, vars)
   end
 
-  def config_get(config = %{}, key) do
+  def get(config = %{}, key) do
     DotNotes.get(config, key)
   end
 
@@ -136,7 +156,7 @@ defmodule Spellbook do
   def set_vars(spellbook = %Spellbook{}, values) when is_list(values) do
     Enum.reduce(values, spellbook, fn(value, spellbook) -> set_var(spellbook, value) end)
   end
-  def set_var(spellbook = %Spellbook{}, {name, value}) do
+  def set_var(spellbook = %Spellbook{}, {name, value} = var) when is_tuple(var) do
     set_var(spellbook, name, value)
   end
   def set_var(spellbook = %Spellbook{}, name, value) do
