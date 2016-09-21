@@ -1,7 +1,7 @@
 defmodule SpellbookTest do
   use ExUnit.Case
   require Spellbook
-  doctest Spellbook
+  doctest Spellbook, except: [:moduledoc]
 
   test "load_config_folder without config" do
     config = Spellbook.load_config_folder()
