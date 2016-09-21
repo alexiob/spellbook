@@ -4,7 +4,7 @@ defmodule Spellbook.Mixfile do
   def project do
     [
       app: :spellbook,
-      version: "0.1.0",
+      version: "1.0.0",
       name: "Spellbook",
       source_url: "https://github.com/alexiob/spellbook",
       homepage_url: "https://github.com/alexiob/spellbook",
