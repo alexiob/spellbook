@@ -6,9 +6,11 @@ defmodule Spellbook do
   Spellbook is an Elixir library providing dynamic hierarchical configurations loading for your application.
   It is based on the ideas implemented in the Javascript [node-config](https://nodei.co/npm/config/) module.
 
-  It lets you define a set of default parameters, and extend them for different deployment environments (development, staging, production, etc.) or custom needs (client id, hostname, etc.).
+  It lets you define a set of default parameters, and extend them for different deployment
+  environments (development, staging, production, etc.) or custom needs (client id, hostname, etc.).
 
-  Configurations are stored in default or custom folders containing [configuration files]() and can be overridden and extended by environment variables.
+  Configurations are stored in default or custom folders containing [configuration files]()
+  and can be overridden and extended by environment variables.
 
   Custom configuration static and dynamic filenames and file formats can be added as needed.
 
@@ -21,7 +23,9 @@ defmodule Spellbook do
   config = Spellbook.load_config_folder()
   ```
 
-  Using `Spellbook.load_config_folder/0` by default will use the following filename templates (in the listed order and if they exist) with the `{SOMETHING}` template variables substituted:
+  Using `Spellbook.load_config_folder/0` by default will use the following filename
+  templates (in the listed order and if they exist) with the `{SOMETHING}` template
+  variables substituted:
 
   ```
   <CWD>/config/default.{EXT}
@@ -43,7 +47,9 @@ defmodule Spellbook do
   <CWD>/config/custom-env-variables.{EXT}
   ```
 
-  Spellbook will use the default  environment (`{ENV}` = `dev`) and the full hostname of the machine the code gets executed on (`{FULL_HOSTNAME}` = `my-machine.spellbook.domain`). As the other template variables are not defined, the filenames using them are ignored.
+  Spellbook will use the default  environment (`{ENV}` = `dev`) and the full hostname
+  of the machine the code gets executed on (`{FULL_HOSTNAME}` = `my-machine.spellbook.domain`).
+  As the other template variables are not defined, the filenames using them are ignored.
   The resulting filenames searched/merged will be:
 
   ```
@@ -77,9 +83,13 @@ defmodule Spellbook do
   )
   ```
 
-  Here we specify a specific folder were to look for the configuration files (with the `folder` option), a custom configuration file name (with the `config_filename` option). The `vars` configuration field is used to define the variable values used in the filename templates.
+  Here we specify a specific folder were to look for the configuration files
+  (with the `folder` option), a custom configuration file name (with the `config_filename` option).
+  The `vars` configuration field is used to define the variable values used in
+  the filename templates.
 
-  The `Spellbook.default_config/0` function (and the `Spellbook.load_config/0` one as well) configures the Spellbook to search for the following file templates:
+  The `Spellbook.default_config/0` function (and the `Spellbook.load_config/0` one as well)
+  configures the Spellbook to search for the following file templates:
 
   ```
   ./test/support/brand/{CONFIG\_FILENAME}.{EXT}
@@ -128,7 +138,8 @@ defmodule Spellbook do
   "a value"
   ```
 
-  or using the `Spellbook.get` method that supports dot notation to access elements deep down the configuration structure:
+  or using the `Spellbook.get` method that supports dot notation to access elements
+  deep down the configuration structure:
 
   ```elixir
   iex> value = Spellbook.get(config, "some.value.from.config")
@@ -137,7 +148,9 @@ defmodule Spellbook do
 
   **Use environment variables in configuration files**
 
-  Some situations rely heavily on environment variables to configure secrets and settings best left out of a codebase. Spellbook lets you use map the environment variable names into your configuration structure using a `custom-env-variables.{EXT}` file:
+  Some situations rely heavily on environment variables to configure secrets and
+  settings best left out of a codebase. Spellbook lets you use map the environment
+  variable names into your configuration structure using a `custom-env-variables.{EXT}` file:
 
   ```json
   {
@@ -148,9 +161,11 @@ defmodule Spellbook do
   }
   ```
 
-  If the `DB_USERNAME` and `DB_PASSWORD` environment variable exist, they would override the values for `database.username` and `database.password` in the configuration.
+  If the `DB_USERNAME` and `DB_PASSWORD` environment variable exist, they would
+  override the values for `database.username` and `database.password` in the configuration.
 
-  Custom environment variables have precedence and override all configuration files, including `local.json`.
+  Custom environment variables have precedence and override all configuration
+  files, including `local.json`.
   """
 
   @default_config_filename "config"
