@@ -14,7 +14,7 @@ It is based on the ideas implemented in the Javascript [node-config](https://nod
 
 It lets you define a set of default parameters, and extend them for different deployment environments (development, staging, production, etc.) or custom needs (client id, hostname, etc.).
 
-Configurations are stored in default or custom folders containing [configuration files]() and can be overridden and extended by environment variables.
+Configurations are stored in default or custom folders containing configuration files and can be overridden and extended by environment variables.
 
 Custom configuration static and dynamic filenames and file formats can be added as needed.
 
