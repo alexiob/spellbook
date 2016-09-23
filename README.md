@@ -5,6 +5,7 @@ Spellbook
 [![Inline docs](http://inch-ci.org/github/alexiob/spellbook.svg)](http://inch-ci.org/github/alexiob/spellbook)
 [![Deps Status](https://beta.hexfaktor.org/badge/all/github/alexiob/spellbook.svg)](https://beta.hexfaktor.org/github/alexiob/spellbook)
 [![Hex version](https://img.shields.io/hexpm/v/spellbook.svg)](https://hex.pm/packages/spellbook)
+[![hex.pm downloads](https://img.shields.io/hexpm/dt/spellbook.svg)](https://hex.pm/packages/spellbook)
 
 Introduction
 ------------
