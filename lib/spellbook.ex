@@ -373,6 +373,8 @@ defmodule Spellbook do
   * `:config_filename`: name of the configuration file, default to `"config"`.
   * `:ignore_invalid_filename_formats`: defauts to `true`. Set it to `false` if
   you want to raise an exception if a file in the generated filenames list is not found.
+  * `:config`: optional configuration Map or Keyword list to be merged into the
+  final configuration. Takes precedence on everything except the environment variables.
   """
   @spec set_options(spellbook :: Spellbook, options :: nil | list | Map.t) :: Spellbook
   def set_options(spellbook=%Spellbook{}, options) when is_nil(options) do
