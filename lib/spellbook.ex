@@ -178,7 +178,7 @@ defmodule Spellbook do
       "yaml" => Spellbook.Parser.YAML,
     },
     vars: %{
-      env: "dev",
+      env: to_string(Mix.env),
     },
     options: %{
       ignore_invalid_filename_formats: true,
