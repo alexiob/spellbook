@@ -215,10 +215,10 @@ defmodule Spellbook do
       %{"a" => %{"b" => "spellbook", "c" => "NOT_A_VAR"}}
   """
   @spec substitute_vars(config :: Map.t, vars :: Map.t) :: Map.t
-  def substitute_vars(config = %{}, vars = %{}) do
+  def substitute_vars(config, vars) do
     Map.merge(config, config, fn (key, config, _config) -> substitute_vars_resolve(key, config, vars) end)
   end
-  defp substitute_vars_resolve(_key, config = %{}, vars) do
+  defp substitute_vars_resolve(_key, config, vars) when is_map(config) do
     substitute_vars(config, vars)
   end
   defp substitute_vars_resolve(_key, config, vars) do
@@ -263,7 +263,7 @@ defmodule Spellbook do
       "1"
   """
   @spec get(config :: Map.t, key :: String.t) :: any
-  def get(config = %{}, key) do
+  def get(config, key) when is_map(config) do
     DotNotes.get(config, key)
   end
 
@@ -284,7 +284,7 @@ defmodule Spellbook do
       |> Spellbook.add_filename_format(["clients/special/\#{brand}-\#{version}.\#{ext}", "clients/external-\#{brand}.\#{ext}"])
 
   """
-  @spec add_filename_format(spellbook :: Spellbook, filename_formats :: [String.t]) :: Spellbook
+  @macrocallback add_filename_format(spellbook :: Spellbook, filename_formats :: [String.t]) :: Spellbook
   defmacro add_filename_format(spellbook, filename_formats) when is_list(filename_formats) do
     filename_formats = Macro.escape(filename_formats)
 
@@ -294,7 +294,7 @@ defmodule Spellbook do
     end
   end
 
-  @spec add_filename_format(spellbook :: Spellbook, filename_formats :: String.t) :: Spellbook
+  @macrocallback add_filename_format(spellbook :: Spellbook, filename_formats :: String.t) :: Spellbook
   defmacro add_filename_format(spellbook, filename_format) do
     filename_format = Macro.escape(filename_format)
 
@@ -305,15 +305,19 @@ defmodule Spellbook do
   end
 
   # FILE LIST GENERATOR
-  defp generate(spellbook = %Spellbook{}, params = %{}) do
-    params = Map.merge(%{config_filename: @default_config_filename, vars: Keyword.new()}, params)
+  defp generate(spellbook = %Spellbook{}, params) do
+    params = %{config_filename: @default_config_filename, vars: Keyword.new()}
+    |> Map.merge(params)
     |> set_config_name()
 
-    merged_vars = Map.merge(Map.get(spellbook, :vars), Map.new(Map.get(params, :vars, Keyword.new())))
+    merged_vars = spellbook
+    |> Map.get(:vars)
+    |> Map.merge(Map.new(Map.get(params, :vars, Keyword.new())))
     |> Map.to_list()
     |> Enum.filter(fn(v) -> !is_nil(elem(v, 1)) end)
 
-    config_files = Enum.flat_map(spellbook.filename_formats,
+    config_files = spellbook.filename_formats
+    |> Enum.flat_map(
       fn(f) ->
         Enum.map(spellbook.extensions,
           fn({e, _}) ->
@@ -344,7 +348,7 @@ defmodule Spellbook do
   @doc """
   Sets some variable to be used during filenames list generation.
   """
-  @spec set_vars(spellbook :: Spellbook, values :: [{name :: String.t, value :: any }]) :: Spellbook
+  @spec set_vars(spellbook :: %Spellbook{}, values :: maybe_improper_list()) :: %Spellbook{}
   def set_vars(spellbook = %Spellbook{}, values) when is_list(values) do
     Enum.reduce(values, spellbook, fn(value, spellbook) -> set_var(spellbook, value) end)
   end
@@ -352,14 +356,14 @@ defmodule Spellbook do
   Sets a variable to be used during filenames list generation using a 2 elements
   tuple.
   """
-  @spec set_var(spellbook :: Spellbook, {name :: String.t, value :: any }) :: Spellbook
+  @spec set_var(spellbook :: %Spellbook{}, {name :: String.t, value :: any}) :: %Spellbook{}
   def set_var(spellbook = %Spellbook{}, {name, value}) do
     set_var(spellbook, name, value)
   end
   @doc """
   Sets a variable to be used during filenames list generation.
   """
-  @spec set_var(spellbook :: Spellbook, name :: String.t, value :: any) :: Spellbook
+  @spec set_var(spellbook :: %Spellbook{}, name :: String.t, value :: any) :: %Spellbook{}
   def set_var(spellbook = %Spellbook{}, name, value) do
     Map.put(spellbook, :vars, Map.put(Map.get(spellbook, :vars), name, value))
   end
@@ -376,14 +380,14 @@ defmodule Spellbook do
   * `:config`: optional configuration Map or Keyword list to be merged into the
   final configuration. Takes precedence on everything except the environment variables.
   """
-  @spec set_options(spellbook :: Spellbook, options :: nil | list | Map.t) :: Spellbook
-  def set_options(spellbook=%Spellbook{}, options) when is_nil(options) do
+  @spec set_options(spellbook :: %Spellbook{}, options :: nil | list | Map.t) :: %Spellbook{}
+  def set_options(spellbook = %Spellbook{}, options) when is_nil(options) do
     spellbook
   end
-  def set_options(spellbook=%Spellbook{}, options) when is_list(options) do
+  def set_options(spellbook = %Spellbook{}, options) when is_list(options) do
     set_options(spellbook, Map.new(options))
   end
-  def set_options(spellbook=%Spellbook{}, options) when is_map(options) do
+  def set_options(spellbook = %Spellbook{}, options) when is_map(options) do
     Map.put(spellbook, :options, Map.merge(Map.get(spellbook, :options), options))
   end
 
@@ -396,8 +400,8 @@ defmodule Spellbook do
       }
       Spellbook.register_extensions(spellbook, extensions)
   """
-  @spec register_extensions(spellbook :: Spellbook, extensions :: Map.t) :: Spellbook
-  def register_extensions(spellbook = %Spellbook{}, extensions = %{}) do
+  @spec register_extensions(spellbook :: %Spellbook{}, extensions :: Map.t) :: %Spellbook{}
+  def register_extensions(spellbook = %Spellbook{}, extensions) do
     Map.put(spellbook, :extensions, Map.merge(spellbook.extensions, extensions))
   end
 
@@ -405,14 +409,14 @@ defmodule Spellbook do
   @doc """
   Sets up the default configuration for reading application configuration from a folder.
   """
-  @spec default_config_folder(params :: []) :: Spellbook
+  @spec default_config_folder(params :: keyword()) :: %Spellbook{}
   def default_config_folder(params) when is_list(params) do
     default_config_folder(%Spellbook{}, Map.new(params))
   end
   @doc """
   Sets up the default configuration for reading application configuration from a folder.
   """
-  @spec default_config_folder(params :: Map.t) :: Spellbook
+  @spec default_config_folder(params :: Map.t) :: %Spellbook{}
   def default_config_folder(params) when is_map(params) do
     default_config_folder(%Spellbook{}, params)
   end
@@ -445,7 +449,7 @@ defmodule Spellbook do
   <CWD>/config/custom-env-variables.{EXT}
   ```
   """
-  @spec default_config_folder(spellbook :: Spellbook, params :: Map.t) :: Spellbook
+  @spec default_config_folder(spellbook :: %Spellbook{}, params :: Map.t) :: %Spellbook{}
   def default_config_folder(spellbook = %Spellbook{} \\ %Spellbook{}, params \\ %{}) do
     {full_hostname, short_hostname} = get_hostnames()
 
@@ -509,7 +513,7 @@ defmodule Spellbook do
   <FOLDER>/custom-env-variables.{EXT}
   ```
   """
-  @spec default_config(spellbook :: Spellbook, params :: Map.t) :: Spellbook
+  @spec default_config(spellbook :: %Spellbook{}, params :: Map.t) :: %Spellbook{}
   def default_config(spellbook = %Spellbook{} \\ %Spellbook{}, params \\ %{}) do
     {full_hostname, short_hostname} = get_hostnames()
 
@@ -534,14 +538,15 @@ defmodule Spellbook do
   """
   @spec load_config_folder(params :: Map.t) :: Map.t
   def load_config_folder(params \\ %{}) do
-    default_config_folder(params)
+    params
+    |> default_config_folder()
     |> load_config(params)
   end
   @doc """
   Creates a Spellbook with the default config folder filenames list and loads them into a configuration map
   """
-  @spec load_config_folder(spellbook :: Spellbook, params :: Map.t) :: Map.t
-  def load_config_folder(spellbook = %Spellbook{}, params = %{}) do
+  @spec load_config_folder(spellbook :: %Spellbook{}, params :: Map.t) :: Map.t
+  def load_config_folder(spellbook = %Spellbook{}, params) do
     spellbook
     |> set_vars(params[:vars])
     |> set_options(params[:options])
@@ -553,22 +558,23 @@ defmodule Spellbook do
   """
   @spec load_default_config(params :: list) :: Map.t
   def load_default_config(params) when is_list(params) do
-    default_config(params)
+    params
+    |> default_config()
     |> load_config(params)
   end
 
   @doc """
   Loads the configuration files from the provided Spellbook.
   """
-  @spec load_config(spellbook :: Spellbook, params :: list) :: Map.t
+  @spec load_config(spellbook :: %Spellbook{}, params :: maybe_improper_list()) :: Map.t
   def load_config(spellbook = %Spellbook{}, params) when is_list(params) do
     load_config(spellbook, Map.new(params))
   end
   @doc """
   Loads the configuration files from the provided Spellbook.
   """
-  @spec load_config(spellbook :: Spellbook, params :: Map.t) :: Map.t
-  def load_config(spellbook = %Spellbook{}, params = %{}) do
+  @spec load_config(spellbook :: %Spellbook{}, params :: Map.t) :: Map.t
+  def load_config(spellbook = %Spellbook{}, params) do
     # load and merge available config files
     {config_files, params} = generate(spellbook, params)
     config_folder = Map.get(params, :folder, Path.join(System.cwd() || __DIR__, "config"))
@@ -623,7 +629,8 @@ defmodule Spellbook do
   end
 
   defp load_and_merge_config_file(spellbook = %Spellbook{}, filename, config = %{}) do
-    load_config_file(spellbook, filename)
+    spellbook
+    |> load_config_file(filename)
     |> merge_config_file_result(filename, config)
   end
 
