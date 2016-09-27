@@ -18,6 +18,8 @@ defmodule Spellbook.Mixfile do
       docs: [
         extras: ["README.md"]
       ],
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test]
     ]
   end
 
@@ -34,6 +36,7 @@ defmodule Spellbook.Mixfile do
       {:ex_doc, "~> 0.13", only: [:dev, :docs]},
       {:ex_doc_dash, "~> 0.2", only: :docs},
       {:inch_ex, ">= 0.0.0", only: :docs},
+      {:excoveralls, "~> 0.5", only: :test},
 
       {:poison, "~> 2.2"}, # pure Elixir JSON library
 
