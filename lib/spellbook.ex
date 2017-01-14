@@ -305,7 +305,7 @@ defmodule Spellbook do
   end
 
   # FILE LIST GENERATOR
-  defp generate(spellbook = %Spellbook{}, params) do
+  def generate(spellbook = %Spellbook{}, params) do
     params = %{config_filename: @default_config_filename, vars: Keyword.new()}
     |> Map.merge(params)
     |> set_config_name()
