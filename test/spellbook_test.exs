@@ -3,6 +3,14 @@ defmodule SpellbookTest do
   require Spellbook
   doctest Spellbook, except: [:moduledoc]
 
+  test "generate" do
+    params = %{ :vars => [instance: 0, brand: "alexiob", env: "dev"] }
+    {config_files, params} = Spellbook.generate(Spellbook.default_config(), params)
+
+    assert length(config_files) == 8
+    assert Map.get(params, :config_filename) == "config"
+  end
+
   test "load_config_folder without config" do
     config = Spellbook.load_config_folder()
 
