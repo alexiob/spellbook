@@ -8,7 +8,7 @@ defmodule Spellbook.Mixfile do
       name: "Spellbook",
       source_url: "https://github.com/alexiob/spellbook",
       homepage_url: "https://github.com/alexiob/spellbook",
-      elixir: "~> 1.3",
+      elixir: "~> 1.4",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       elixirc_paths: paths(Mix.env),
@@ -29,7 +29,7 @@ defmodule Spellbook.Mixfile do
   end
 
   def application do
-    [applications: applications(Mix.env)]
+    [extra_applications: applications(Mix.env)]
   end
 
   defp deps do
@@ -60,10 +60,10 @@ defmodule Spellbook.Mixfile do
   end
 
   defp applications(env) when env in [:dev, :test] do
-    [:logger, :yaml_elixir]
+    [:logger]
   end
   defp applications(_) do
-    [:logger, :yaml_elixir]
+    [:logger]
   end
 
   defp description do
