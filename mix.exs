@@ -4,7 +4,7 @@ defmodule Spellbook.Mixfile do
   def project do
     [
       app: :spellbook,
-      version: "1.0.1",
+      version: "1.0.2",
       name: "Spellbook",
       source_url: "https://github.com/alexiob/spellbook",
       homepage_url: "https://github.com/alexiob/spellbook",
@@ -34,18 +34,18 @@ defmodule Spellbook.Mixfile do
 
   defp deps do
     [
-      {:credo, "~> 0.4", only: [:dev]},
+      {:credo, "~> 0.5", only: [:dev]},
       {:dialyze, "~> 0.2", only: [:dev]},
-      {:dialyxir, "~> 0.3", only: [:dev]},
+      {:dialyxir, "~> 0.4", only: [:dev]},
       {:mr_t, "~> 0.6.0", only: [:test, :dev]}, # instant code-reloader and test runner
-      {:ex_doc, "~> 0.13", only: [:dev, :docs]},
-      {:ex_doc_dash, "~> 0.2", only: :docs},
-      {:inch_ex, ">= 0.0.0", only: :docs},
+      {:ex_doc, "~> 0.14", only: [:dev, :docs]},
+      {:ex_doc_dash, "~> 0.3", only: :docs},
+      {:inch_ex, "~> 0.5", only: :docs},
       {:excoveralls, "~> 0.5", only: :test},
 
-      {:poison, "~> 2.2"}, # pure Elixir JSON library
+      {:poison, "~> 3.0"}, # pure Elixir JSON library
 
-      {:yamerl, "~> 0.3"}, # Erlang YAML parser
+      {:yamerl, "~> 0.4"}, # Erlang YAML parser
       {:yaml_elixir, "~> 1.2"}, # Elixir YAML parser
 
       {:dot_notes, "~> 1.0"}, # dot.notation
