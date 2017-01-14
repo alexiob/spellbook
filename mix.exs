@@ -37,7 +37,7 @@ defmodule Spellbook.Mixfile do
       {:credo, "~> 0.5", only: [:dev]},
       {:dialyze, "~> 0.2", only: [:dev]},
       {:dialyxir, "~> 0.4", only: [:dev]},
-      {:mr_t, "~> 0.6.0", only: [:test, :dev]}, # instant code-reloader and test runner
+      # {:mr_t, "~> 0.6.0", only: [:test, :dev]}, # instant code-reloader and test runner
       {:ex_doc, "~> 0.14", only: [:dev, :docs]},
       {:ex_doc_dash, "~> 0.3", only: :docs},
       {:inch_ex, "~> 0.5", only: :docs},
