@@ -75,7 +75,7 @@ defmodule Spellbook do
 
   ```elixir
   config = Spellbook.default_config()
-  |> Spellbook.add_filename_format("clients/\#{brand}.\#{ext}")
+  |> Spellbook.add_filename_format("clients/%{brand}.%{ext}")
   |> Spellbook.load_config(
     folder: "./test/support/brand",
     config_filename: "brand-conf",
@@ -186,6 +186,7 @@ defmodule Spellbook do
   ]
 
   require Logger
+  require Spellbook.Interpolation
 
   # UTILITIES
 
@@ -298,36 +299,27 @@ defmodule Spellbook do
   Adds a filename format to the list of templates to be used to generate
   the list of files to be searched when the configuration is loaded.
 
-  Filename formats can contain template variables specified using Elixir string interpolation format (`\#{VARIABLE}`):
-  * `"special-\#{env}.\#{ext}"`
-  * `"config-\#{username}-\#{role}.json"`
-  * `"UPPERCASE-\#{String.upcase(env)}.yaml"`
+  Filename formats can contain template variables specified using the following interpolation format (`%{VARIABLE}`):
+  * `"special-%{env}.%{ext}"`
+  * `"config-%{username}-%{role}.json"`
 
   Files are loaded in the order you specify the filename formats.
 
       config = Spellbook.default_config()
-      |> Spellbook.add_filename_format("clients/\#{brand}.\#{ext}")
-      |> Spellbook.add_filename_format(["clients/special/\#{brand}-\#{version}.\#{ext}", "clients/external-\#{brand}.\#{ext}"])
+      |> Spellbook.add_filename_format("clients/%{brand}.%{ext}")
+      |> Spellbook.add_filename_format(["clients/special/%{brand}-%{version}.%{ext}", "clients/external-%{brand}.%{ext}"])
 
   """
-  @macrocallback add_filename_format(spellbook :: Spellbook, filename_formats :: [String.t]) :: Spellbook
-  defmacro add_filename_format(spellbook, filename_formats) when is_list(filename_formats) do
-    filename_formats = Macro.escape(filename_formats)
-
-    quote do
-      current_filename_formats = Map.get(unquote(spellbook), :filename_formats, [])
-      Map.put(unquote(spellbook), :filename_formats, current_filename_formats ++ unquote(filename_formats))
-    end
+  @spec add_filename_format(spellbook :: Spellbook, filename_formats :: [String.t]) :: Spellbook
+  def add_filename_format(spellbook, filename_formats) when is_list(filename_formats) do
+    current_filename_formats = Map.get(spellbook, :filename_formats, [])
+    Map.put(spellbook, :filename_formats, current_filename_formats ++ filename_formats)
   end
 
-  @macrocallback add_filename_format(spellbook :: Spellbook, filename_formats :: String.t) :: Spellbook
-  defmacro add_filename_format(spellbook, filename_format) do
-    filename_format = Macro.escape(filename_format)
-
-    quote do
-      current_filename_formats = Map.get(unquote(spellbook), :filename_formats, [])
-      Map.put(unquote(spellbook), :filename_formats, current_filename_formats ++ [unquote(filename_format)])
-    end
+  @spec add_filename_format(spellbook :: Spellbook, filename_formats :: String.t) :: Spellbook
+  def add_filename_format(spellbook, filename_format) do
+    current_filename_formats = Map.get(spellbook, :filename_formats, [])
+    Map.put(spellbook, :filename_formats, current_filename_formats ++ [filename_format])
   end
 
   # FILE LIST GENERATOR
@@ -341,23 +333,22 @@ defmodule Spellbook do
     |> Map.merge(Map.new(Map.get(params, :vars, Keyword.new())))
     |> Map.to_list()
     |> Enum.filter(fn(v) -> !is_nil(elem(v, 1)) end)
+    |> Map.new
 
     config_files = spellbook.filename_formats
     |> Enum.flat_map(
       fn(f) ->
         Enum.map(spellbook.extensions,
           fn({e, _}) ->
-            merged_vars = Keyword.put(merged_vars, :ext, e)
+            merged_vars = Map.put(merged_vars, :ext, e)
 
-            try do
-              {text, _} = Code.eval_quoted(f, merged_vars)
-              text
-            rescue
-              e in CompileError ->
+            case Spellbook.Interpolation.interpolate(Spellbook.Interpolation.to_interpolatable(f), merged_vars) do
+              {:ok, interpolated_string} -> interpolated_string
+              {:missing_bindings, _incomplete_string, missing_bindings} ->
                 case spellbook.options.ignore_invalid_filename_formats do
-                  false -> throw e
+                  false -> raise ArgumentError, message: "Filename format #{f} missing bindings: #{missing_bindings}"
                   true ->
-                    # Logger.debug("Skipping filename format: #{e.description}")
+                    # Logger.debug("Skipping filename format: #{f}")
                     nil
                 end
             end
@@ -483,26 +474,26 @@ defmodule Spellbook do
 
     spellbook
     |> add_filename_format([
-      "default.#{ext}",
-      "default-#{instance}.#{ext}",
+      "default.%{ext}",
+      "default-%{instance}.%{ext}",
 
-      "#{env}.#{ext}",
-      "#{env}-#{instance}.#{ext}",
+      "%{env}.%{ext}",
+      "%{env}-%{instance}.%{ext}",
 
-      "#{short_hostname}.#{ext}",
-      "#{short_hostname}-#{instance}.#{ext}",
-      "#{short_hostname}-#{env}.#{ext}",
-      "#{short_hostname}-#{env}-#{instance}.#{ext}",
+      "%{short_hostname}.%{ext}",
+      "%{short_hostname}-%{instance}.%{ext}",
+      "%{short_hostname}-%{env}.%{ext}",
+      "%{short_hostname}-%{env}-%{instance}.%{ext}",
 
-      "#{full_hostname}.#{ext}",
-      "#{full_hostname}-#{instance}.#{ext}",
-      "#{full_hostname}-#{env}.#{ext}",
-      "#{full_hostname}-#{env}-#{instance}.#{ext}",
+      "%{full_hostname}.%{ext}",
+      "%{full_hostname}-%{instance}.%{ext}",
+      "%{full_hostname}-%{env}.%{ext}",
+      "%{full_hostname}-%{env}-%{instance}.%{ext}",
 
-      "local.#{ext}",
-      "local-#{instance}.#{ext}",
-      "local-#{env}.#{ext}",
-      "local-#{env}-#{instance}.#{ext}",
+      "local.%{ext}",
+      "local-%{instance}.%{ext}",
+      "local-%{env}.%{ext}",
+      "local-%{env}-%{instance}.%{ext}",
     ])
     |> set_vars([full_hostname: full_hostname, short_hostname: short_hostname])
     |> set_vars(params[:vars])
@@ -547,11 +538,11 @@ defmodule Spellbook do
 
     spellbook
     |> add_filename_format([
-      "#{config_filename}.#{ext}",
-      "#{config_filename}-#{instance}.#{ext}",
-      "#{config_filename}-#{env}.#{ext}",
-      "#{config_filename}-#{short_hostname}-#{env}-#{instance}.#{ext}",
-      "#{config_filename}-#{full_hostname}-#{env}-#{instance}.#{ext}"
+      "%{config_filename}.%{ext}",
+      "%{config_filename}-%{instance}.%{ext}",
+      "%{config_filename}-%{env}.%{ext}",
+      "%{config_filename}-%{short_hostname}-%{env}-%{instance}.%{ext}",
+      "%{config_filename}-%{full_hostname}-%{env}-%{instance}.%{ext}"
     ])
     |> set_vars([full_hostname: full_hostname, short_hostname: short_hostname])
     |> set_vars(params[:vars])

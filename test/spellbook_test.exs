@@ -47,7 +47,7 @@ defmodule SpellbookTest do
 
   test "load_config with custom filename and extra filename format" do
     config = Spellbook.default_config()
-    |> Spellbook.add_filename_format("clients/#{brand}.#{ext}")
+    |> Spellbook.add_filename_format("clients/%{brand}.%{ext}")
     |> Spellbook.load_config(
       folder: "./test/support/brand",
       config_filename: "brand-conf",
