@@ -208,6 +208,32 @@ defmodule Spellbook do
   end
 
   @doc """
+  Performs a deep merge of a configuration into an application environment.
+
+  ## Examples
+      iex> Application.put_env(:spellbook_test, :a, 1)
+      :ok
+      iex> Application.put_env(:spellbook_test, :b, "first")
+      :ok
+      iex> Application.put_env(:spellbook_test, :c, %{c1: 1, c2: "c second"})
+      :ok
+      iex> Spellbook.apply_to_application_env(%{:a => 2, :b => "second", :c => %{:c3 => "c third"}}, :spellbook_test)
+      :ok
+      iex> Application.get_env(:spellbook_test, :a)
+      2
+      iex> Application.get_env(:spellbook_test, :b)
+      "second"
+      iex> Application.get_env(:spellbook_test, :c)
+      %{c1: 1, c2: "c second", c3: "c third"}
+  """
+  @spec apply_to_application_env(config :: Map.t, atom) :: :ok | :error
+  def apply_to_application_env(config, app_env) do
+    Map.new(Application.get_all_env(app_env))
+    |> deep_merge(config)
+    |> Enum.each(fn({k, v}) -> Application.put_env(app_env, k, v) end)
+  end
+
+  @doc """
   Performs a deep substitution of variables used as map values.
 
   ## Examples
