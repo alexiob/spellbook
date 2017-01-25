@@ -210,28 +210,29 @@ defmodule Spellbook do
 
   @doc """
   Performs a deep merge of a configuration into an application environment.
-
-  ## Examples
-      iex> Application.put_env(:spellbook_test, :a, 1)
-      :ok
-      iex> Application.put_env(:spellbook_test, :b, "first")
-      :ok
-      iex> Application.put_env(:spellbook_test, :c, %{c1: 1, c2: "c second"})
-      :ok
-      iex> Spellbook.apply_to_application_env(%{:a => 2, :b => "second", :c => %{:c3 => "c third"}}, :spellbook_test)
-      :ok
-      iex> Application.get_env(:spellbook_test, :a)
-      2
-      iex> Application.get_env(:spellbook_test, :b)
-      "second"
-      iex> Application.get_env(:spellbook_test, :c)
-      %{c1: 1, c2: "c second", c3: "c third"}
   """
-  @spec apply_to_application_env(config :: Map.t, atom) :: :ok | :error
-  def apply_to_application_env(config, app_env) do
-    Map.new(Application.get_all_env(app_env))
-    |> deep_merge(config)
-    |> Enum.each(fn({k, v}) -> Application.put_env(app_env, k, v) end)
+  @spec apply_config_to_application_env(config :: Map.t, config_key :: String.t, atom | nil, atom | nil) :: :ok
+  def apply_config_to_application_env(config, config_key, app_name \\ nil, env_key \\ nil) do
+    env_config = Map.get(config, config_key)
+
+    app_name = case is_nil(app_name) do
+      true -> Application.get_application(__MODULE__)
+      false -> app_name
+    end
+
+    env_key = case is_nil(env_key) do
+      true -> String.to_existing_atom("Elixir." <> config_key)
+      false -> env_key
+    end
+
+    env = Application.fetch_env!(app_name, env_key)
+    env = Enum.reduce(Map.keys(env_config), env, fn (k, env) ->
+      Keyword.put(env, String.to_atom(k), Map.get(env_config, k))
+    end)
+
+    Application.put_env(app_name, env_key, env)
+
+    :ok
   end
 
   @doc """
