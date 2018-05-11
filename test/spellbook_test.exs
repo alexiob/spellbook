@@ -31,7 +31,7 @@ defmodule SpellbookTest do
     config = Spellbook.load_config_folder(
       folder: "./test/support/config",
       vars: [instance: 0, brand: "alexiob", env: "dev", short_hostname: "localhost"],
-      options: %{ ignore_invalid_filename_formats: false },
+      options: %{ ignore_invalid_filename_formats: false }
     )
 
     assert is_map(config)
