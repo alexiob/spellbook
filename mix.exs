@@ -45,8 +45,7 @@ defmodule Spellbook.Mixfile do
 
       {:poison, "~> 3.0"}, # pure Elixir JSON library
 
-      {:yamerl, "~> 0.4"}, # Erlang YAML parser
-      {:yaml_elixir, "~> 1.2"}, # Elixir YAML parser
+      {:yaml_elixir, "~> 2.0"}, # Elixir YAML parser
 
       {:dot_notes, "~> 1.0"}, # dot.notation
     ]

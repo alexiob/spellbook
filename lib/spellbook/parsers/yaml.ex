@@ -6,7 +6,7 @@ defmodule Spellbook.Parser.YAML do
 
   def parse(data) do
     try do
-      data = YamlElixir.read_from_string(data)
+      data = YamlElixir.read_from_string!(data)
       {:ok, data}
     catch
       _, {_, [reason | _]} ->
