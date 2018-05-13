@@ -4,7 +4,7 @@
 defmodule Spellbook.Interpolation do
   @moduledoc false
 
-  @type interpolatable :: [String.t | atom]
+  @type interpolatable :: [String.t() | atom]
 
   @doc """
   Extracts interpolations from a given string.
@@ -18,7 +18,7 @@ defmodule Spellbook.Interpolation do
       iex> Gettext.Interpolation.to_interpolatable("Empties %{} stay empty")
       ["Empties %{} stay empty"]
   """
-  @spec to_interpolatable(String.t) :: interpolatable
+  @spec to_interpolatable(String.t()) :: interpolatable
   def to_interpolatable(string) do
     start_pattern = :binary.compile_pattern("%{")
     end_pattern = :binary.compile_pattern("}")
@@ -34,11 +34,13 @@ defmodule Spellbook.Interpolation do
       # string.
       [rest] ->
         prepend_if_not_empty(current <> rest, acc)
+
       # If we found a %{ but it's followed by an immediate }, then we just
       # append %{} to the current string and keep going.
       [before, "}" <> rest] ->
         new_current = current <> before <> "%{}"
         to_interpolatable(rest, new_current, acc, start_pattern, end_pattern)
+
       # Otherwise, we found the start of a binding.
       [before, binding_and_rest] ->
         case :binary.split(binding_and_rest, end_pattern) do
@@ -47,6 +49,7 @@ defmodule Spellbook.Interpolation do
           # there.
           [_] ->
             [current <> string | acc]
+
           # This is the case where we found a binding, so we put it in the acc
           # and keep going.
           [binding, rest] ->
@@ -79,7 +82,7 @@ defmodule Spellbook.Interpolation do
       {:missing_bindings, "Hello José, you have %{count} unread messages", [:count]}
   """
   @spec interpolate(interpolatable, map) ::
-        {:ok, String.t} | {:missing_bindings, String.t, [atom]}
+          {:ok, String.t()} | {:missing_bindings, String.t(), [atom]}
   def interpolate(interpolatable, bindings)
       when is_list(interpolatable) and is_map(bindings) do
     interpolate(interpolatable, bindings, [], [])
@@ -88,19 +91,25 @@ defmodule Spellbook.Interpolation do
   defp interpolate([string | segments], bindings, strings, missing) when is_binary(string) do
     interpolate(segments, bindings, [string | strings], missing)
   end
+
   defp interpolate([atom | segments], bindings, strings, missing) when is_atom(atom) do
     case bindings do
       %{^atom => value} ->
         interpolate(segments, bindings, [to_string(value) | strings], missing)
+
       %{} ->
-        interpolate(segments, bindings, ["%{" <> Atom.to_string(atom) <> "}" | strings], [atom | missing])
+        interpolate(segments, bindings, ["%{" <> Atom.to_string(atom) <> "}" | strings], [
+          atom | missing
+        ])
     end
   end
+
   defp interpolate([], _bindings, strings, []) do
     {:ok, IO.iodata_to_binary(Enum.reverse(strings))}
   end
+
   defp interpolate([], _bindings, strings, missing) do
-    missing = missing |> Enum.reverse |> Enum.uniq
+    missing = missing |> Enum.reverse() |> Enum.uniq()
     {:missing_bindings, IO.iodata_to_binary(Enum.reverse(strings)), missing}
   end
 
@@ -120,11 +129,11 @@ defmodule Spellbook.Interpolation do
       iex> Gettext.Interpolation.keys(["Hello ", :name, "! Goodbye", :name])
       [:name]
   """
-  @spec keys(String.t | interpolatable) :: [atom]
+  @spec keys(String.t() | interpolatable) :: [atom]
   def keys(string_or_interpolatable)
 
-  def keys(string) when is_binary(string),
-    do: string |> to_interpolatable() |> keys()
+  def keys(string) when is_binary(string), do: string |> to_interpolatable() |> keys()
+
   def keys(interpolatable) when is_list(interpolatable),
-    do: interpolatable |> Enum.filter(&is_atom/1) |> Enum.uniq
+    do: interpolatable |> Enum.filter(&is_atom/1) |> Enum.uniq()
 end

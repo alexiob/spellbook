@@ -6,6 +6,7 @@ defmodule SpellbookParserYAMLTest do
     test = """
     test: 1
     """
+
     {:ok, config} = Spellbook.Parser.YAML.parse(test)
 
     assert Map.get(config, "test") == 1
@@ -16,6 +17,7 @@ defmodule SpellbookParserYAMLTest do
     test: 1
     , error
     """
+
     {:error, _} = Spellbook.Parser.YAML.parse(test)
   end
 end
