@@ -691,14 +691,18 @@ defmodule Spellbook do
             apply(parser, :parse, [data])
 
           nil ->
-            Logger.debug("Error loading '#{filename}': unsupported file format")
+            Logger.debug(fn ->
+              "Error loading '#{filename}': unsupported file format"
+            end)
             {:error, "unsupported file format"}
         end
 
       {:error, reason} ->
         case reason do
           :enoent -> nil
-          true -> Logger.debug("Error loading '#{filename}': #{reason}")
+          true -> Logger.debug(fn ->
+            "Error loading '#{filename}': #{reason}"
+          end)
         end
 
         {:error, reason}
