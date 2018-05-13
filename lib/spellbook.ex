@@ -184,7 +184,7 @@ defmodule Spellbook do
             }
 
   require Logger
-  require Spellbook.Interpolation
+  alias Spellbook.Interpolation
 
   # UTILITIES
 
@@ -361,8 +361,8 @@ defmodule Spellbook do
         Enum.map(spellbook.extensions, fn {e, _} ->
           merged_vars = Map.put(merged_vars, :ext, e)
 
-          case Spellbook.Interpolation.interpolate(
-                 Spellbook.Interpolation.to_interpolatable(f),
+          case Interpolation.interpolate(
+                 Interpolation.to_interpolatable(f),
                  merged_vars
                ) do
             {:ok, interpolated_string} ->
