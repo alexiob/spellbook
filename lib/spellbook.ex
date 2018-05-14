@@ -266,7 +266,7 @@ defmodule Spellbook do
     Map.get(vars, config, config)
   end
 
-  defp get_hostnames() do
+  defp get_hostnames do
     {:ok, full_hostname} = :inet.gethostname()
     full_hostname = to_string(full_hostname)
     short_hostname = to_string(String.split(full_hostname, ".", parts: 1))
