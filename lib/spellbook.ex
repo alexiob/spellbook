@@ -694,15 +694,19 @@ defmodule Spellbook do
             Logger.debug(fn ->
               "Error loading '#{filename}': unsupported file format"
             end)
+
             {:error, "unsupported file format"}
         end
 
       {:error, reason} ->
         case reason do
-          :enoent -> nil
-          true -> Logger.debug(fn ->
-            "Error loading '#{filename}': #{reason}"
-          end)
+          :enoent ->
+            nil
+
+          true ->
+            Logger.debug(fn ->
+              "Error loading '#{filename}': #{reason}"
+            end)
         end
 
         {:error, reason}
