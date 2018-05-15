@@ -9,9 +9,9 @@ defmodule Spellbook.Mixfile do
       source_url: "https://github.com/alexiob/spellbook",
       homepage_url: "https://github.com/alexiob/spellbook",
       elixir: "~> 1.4",
-      build_embedded: Mix.env == :prod,
-      start_permanent: Mix.env == :prod,
-      elixirc_paths: paths(Mix.env),
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
+      elixirc_paths: paths(Mix.env()),
       description: description(),
       package: package(),
       deps: deps(),
@@ -20,7 +20,7 @@ defmodule Spellbook.Mixfile do
       ],
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
-        "coveralls": :test,
+        coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.post": :test,
         "coveralls.html": :test
@@ -29,7 +29,7 @@ defmodule Spellbook.Mixfile do
   end
 
   def application do
-    [extra_applications: applications(Mix.env)]
+    [extra_applications: applications(Mix.env())]
   end
 
   defp deps do
@@ -42,18 +42,19 @@ defmodule Spellbook.Mixfile do
       {:ex_doc_dash, "~> 0.3", only: :docs},
       {:inch_ex, "~> 0.5", only: :docs},
       {:excoveralls, "~> 0.5", only: :test},
-
-      {:poison, "~> 3.0"}, # pure Elixir JSON library
-
-      {:yaml_elixir, "~> 2.0"}, # Elixir YAML parser
-
-      {:dot_notes, "~> 1.0"}, # dot.notation
+      # pure Elixir JSON library
+      {:poison, "~> 3.0"},
+      # Elixir YAML parser
+      {:yaml_elixir, "~> 2.0"},
+      # dot.notation
+      {:dot_notes, "~> 1.0"}
     ]
   end
 
   defp paths(:test) do
     ["lib", "test/support"]
   end
+
   defp paths(_) do
     ["lib"]
   end
@@ -61,6 +62,7 @@ defmodule Spellbook.Mixfile do
   defp applications(env) when env in [:dev, :test] do
     [:logger]
   end
+
   defp applications(_) do
     [:logger]
   end
