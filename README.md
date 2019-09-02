@@ -29,7 +29,7 @@ end
 
 ## Documentation
 
-The API reference can be found [here](https://hexdocs.pm/dumballah/api-reference.html).
+The API reference can be found [here](https://hexdocs.pm/spellbook/api-reference.html).
 
 ## Quick Start
 
