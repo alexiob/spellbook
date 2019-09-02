@@ -4,7 +4,7 @@ defmodule SpellbookTest do
   doctest Spellbook, except: [:moduledoc]
 
   test "generate" do
-    params = %{ :vars => [instance: 0, brand: "alexiob", env: "dev"] }
+    params = %{:vars => [instance: 0, brand: "alexiob", env: "dev"]}
     {config_files, params} = Spellbook.generate(Spellbook.default_config(), params)
 
     assert length(config_files) == 8
@@ -19,20 +19,19 @@ defmodule SpellbookTest do
   end
 
   test "load_config_folder with simple config" do
-    config = Spellbook.load_config_folder(
-      vars: [instance: 0, brand: "alexiob", env: "dev"]
-    )
+    config = Spellbook.load_config_folder(vars: [instance: 0, brand: "alexiob", env: "dev"])
 
     assert is_map(config)
     assert length(Map.keys(config)) == 0
   end
 
   test "load_config_folder" do
-    config = Spellbook.load_config_folder(
-      folder: "./test/support/config",
-      vars: [instance: 0, brand: "alexiob", env: "dev", short_hostname: "localhost"],
-      options: %{ ignore_invalid_filename_formats: false },
-    )
+    config =
+      Spellbook.load_config_folder(
+        folder: "./test/support/config",
+        vars: [instance: 0, brand: "alexiob", env: "dev", short_hostname: "localhost"],
+        options: %{ignore_invalid_filename_formats: false}
+      )
 
     assert is_map(config)
     assert Map.has_key?(config, "env")
@@ -46,13 +45,14 @@ defmodule SpellbookTest do
   end
 
   test "load_config with custom filename and extra filename format" do
-    config = Spellbook.default_config()
-    |> Spellbook.add_filename_format("clients/%{brand}.%{ext}")
-    |> Spellbook.load_config(
-      folder: "./test/support/brand",
-      config_filename: "brand-conf",
-      vars: [instance: "job-processor", brand: "elixir", env: "dev", short_hostname: "worker"]
-    )
+    config =
+      Spellbook.default_config()
+      |> Spellbook.add_filename_format("clients/%{brand}.%{ext}")
+      |> Spellbook.load_config(
+        folder: "./test/support/brand",
+        config_filename: "brand-conf",
+        vars: [instance: "job-processor", brand: "elixir", env: "dev", short_hostname: "worker"]
+      )
 
     assert is_map(config)
     assert Spellbook.get(config, "name") == "elixir"
@@ -60,32 +60,35 @@ defmodule SpellbookTest do
   end
 
   test "load_config with standard filename" do
-    config = Spellbook.load_default_config(
-      folder: "./test/support/brand",
-      vars: [instance: "2"]
-    )
+    config =
+      Spellbook.load_default_config(
+        folder: "./test/support/brand",
+        vars: [instance: "2"]
+      )
 
     assert is_map(config)
     assert Spellbook.get(config, "name") == "config"
   end
 
   test "load_config with standard filename and custom Spellbook" do
-    config = Spellbook.default_config()
-    |> Spellbook.load_config(
-      folder: "./test/support/brand",
-      vars: [instance: "2"]
-    )
+    config =
+      Spellbook.default_config()
+      |> Spellbook.load_config(
+        folder: "./test/support/brand",
+        vars: [instance: "2"]
+      )
 
     assert is_map(config)
     assert Spellbook.get(config, "name") == "config"
   end
 
   test "load_config with standard filename and custom config argument" do
-    config = Spellbook.load_default_config(
-      folder: "./test/support/brand",
-      vars: [instance: "3"],
-      config: [{"name", "custom"}]
-    )
+    config =
+      Spellbook.load_default_config(
+        folder: "./test/support/brand",
+        vars: [instance: "3"],
+        config: [{"name", "custom"}]
+      )
 
     assert is_map(config)
     assert Spellbook.get(config, "name") == "custom"

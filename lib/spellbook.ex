@@ -171,19 +171,17 @@ defmodule Spellbook do
   @default_config_filename "config"
   @default_env_filename "custom-env-variables"
 
-  defstruct [
-    filename_formats: [],
-    extensions: %{
-      "json" => Spellbook.Parser.JSON,
-      "yaml" => Spellbook.Parser.YAML,
-    },
-    vars: %{
-      env: to_string(Mix.env),
-    },
-    options: %{
-      ignore_invalid_filename_formats: true,
-    }
-  ]
+  defstruct filename_formats: [],
+            extensions: %{
+              "json" => Spellbook.Parser.JSON,
+              "yaml" => Spellbook.Parser.YAML
+            },
+            vars: %{
+              env: to_string(Mix.env())
+            },
+            options: %{
+              ignore_invalid_filename_formats: true
+            }
 
   require Logger
   require Spellbook.Interpolation
@@ -197,13 +195,15 @@ defmodule Spellbook do
       iex> Spellbook.deep_merge(%{"a" => %{"b" => "1", "c" => [1,2,3]}}, %{"a" => %{"b" => "X"}})
       %{"a" => %{"b" => "X", "c" => [1, 2, 3]}}
   """
-  @spec deep_merge(left :: Map.t, right :: Map.t) :: Map.t
+  @spec deep_merge(left :: Map.t(), right :: Map.t()) :: Map.t()
   def deep_merge(left, right) do
     Map.merge(left, right, &deep_resolve/3)
   end
+
   defp deep_resolve(_key, left = %{}, right = %{}) do
     deep_merge(left, right)
   end
+
   defp deep_resolve(_key, _left, right) do
     right
   end
@@ -211,24 +211,33 @@ defmodule Spellbook do
   @doc """
   Performs a deep merge of a configuration into an application environment.
   """
-  @spec apply_config_to_application_env(config :: Map.t, config_key :: String.t, atom | nil, atom | nil) :: :ok
+  @spec apply_config_to_application_env(
+          config :: Map.t(),
+          config_key :: String.t(),
+          atom | nil,
+          atom | nil
+        ) :: :ok
   def apply_config_to_application_env(config, config_key, app_name \\ nil, env_key \\ nil) do
     env_config = Map.get(config, config_key)
 
-    app_name = case is_nil(app_name) do
-      true -> Application.get_application(__MODULE__)
-      false -> app_name
-    end
+    app_name =
+      case is_nil(app_name) do
+        true -> Application.get_application(__MODULE__)
+        false -> app_name
+      end
 
-    env_key = case is_nil(env_key) do
-      true -> String.to_existing_atom("Elixir." <> config_key)
-      false -> env_key
-    end
+    env_key =
+      case is_nil(env_key) do
+        true -> String.to_existing_atom("Elixir." <> config_key)
+        false -> env_key
+      end
 
     env = Application.fetch_env!(app_name, env_key)
-    env = Enum.reduce(Map.keys(env_config), env, fn (k, env) ->
-      Keyword.put(env, String.to_atom(k), Map.get(env_config, k))
-    end)
+
+    env =
+      Enum.reduce(Map.keys(env_config), env, fn k, env ->
+        Keyword.put(env, String.to_atom(k), Map.get(env_config, k))
+      end)
 
     Application.put_env(app_name, env_key, env)
 
@@ -242,40 +251,48 @@ defmodule Spellbook do
       iex> Spellbook.substitute_vars(%{"a" => %{"b" => "VAR", "c" => "NOT_A_VAR"}}, %{"VAR" => "spellbook"})
       %{"a" => %{"b" => "spellbook", "c" => "NOT_A_VAR"}}
   """
-  @spec substitute_vars(config :: Map.t, vars :: Map.t) :: Map.t
+  @spec substitute_vars(config :: Map.t(), vars :: Map.t()) :: Map.t()
   def substitute_vars(config, vars) do
-    Map.merge(config, config, fn (key, config, _config) -> substitute_vars_resolve(key, config, vars) end)
+    Map.merge(config, config, fn key, config, _config ->
+      substitute_vars_resolve(key, config, vars)
+    end)
   end
+
   defp substitute_vars_resolve(_key, config, vars) when is_map(config) do
     substitute_vars(config, vars)
   end
+
   defp substitute_vars_resolve(_key, config, vars) do
     Map.get(vars, config, config)
   end
 
-  defp get_hostnames() do
+  defp get_hostnames do
     {:ok, full_hostname} = :inet.gethostname()
     full_hostname = to_string(full_hostname)
     short_hostname = to_string(String.split(full_hostname, ".", parts: 1))
 
-    short_hostname = case short_hostname do
-      ^full_hostname -> nil
-    end
+    short_hostname =
+      case short_hostname do
+        ^full_hostname -> nil
+      end
 
     {full_hostname, short_hostname}
   end
 
   defp set_config_name(params) when is_map(params) do
     vars = Map.get(params, :vars, Keyword.new())
-    vars = case Map.has_key?(params, :config_filename) do
-      true -> Keyword.put_new(vars, :config_filename, Map.get(params, :config_filename))
-      false -> vars
-    end
 
-    vars = case Keyword.has_key?(vars, :config_filename) do
-      false -> [{:config_filename, @default_config_filename}] ++ vars
-      true -> vars
-    end
+    vars =
+      case Map.has_key?(params, :config_filename) do
+        true -> Keyword.put_new(vars, :config_filename, Map.get(params, :config_filename))
+        false -> vars
+      end
+
+    vars =
+      case Keyword.has_key?(vars, :config_filename) do
+        false -> [{:config_filename, @default_config_filename}] ++ vars
+        true -> vars
+      end
 
     Map.put(params, :vars, vars)
   end
@@ -290,7 +307,7 @@ defmodule Spellbook do
       iex> Spellbook.get(%{"a" => %{"b" => "1", "c" => [1,2,3]}}, "a.b")
       "1"
   """
-  @spec get(config :: Map.t, key :: String.t) :: any
+  @spec get(config :: Map.t(), key :: String.t()) :: any
   def get(config, key) when is_map(config) do
     DotNotes.get(config, key)
   end
@@ -311,13 +328,13 @@ defmodule Spellbook do
       |> Spellbook.add_filename_format(["clients/special/%{brand}-%{version}.%{ext}", "clients/external-%{brand}.%{ext}"])
 
   """
-  @spec add_filename_format(spellbook :: Spellbook, filename_formats :: [String.t]) :: Spellbook
+  # @spec add_filename_format(spellbook :: Spellbook, filename_formats :: [String.t]) :: Spellbook
   def add_filename_format(spellbook, filename_formats) when is_list(filename_formats) do
     current_filename_formats = Map.get(spellbook, :filename_formats, [])
     Map.put(spellbook, :filename_formats, current_filename_formats ++ filename_formats)
   end
 
-  @spec add_filename_format(spellbook :: Spellbook, filename_formats :: String.t) :: Spellbook
+  @spec add_filename_format(spellbook :: Spellbook, filename_formats :: String.t()) :: Spellbook
   def add_filename_format(spellbook, filename_format) do
     current_filename_formats = Map.get(spellbook, :filename_formats, [])
     Map.put(spellbook, :filename_formats, current_filename_formats ++ [filename_format])
@@ -325,41 +342,59 @@ defmodule Spellbook do
 
   # FILE LIST GENERATOR
   def generate(spellbook = %Spellbook{}, params) do
-    params = %{config_filename: @default_config_filename, vars: Keyword.new()}
-    |> Map.merge(params)
-    |> set_config_name()
+    params =
+      %{config_filename: @default_config_filename, vars: Keyword.new()}
+      |> Map.merge(params)
+      |> set_config_name()
 
-    merged_vars = spellbook
-    |> Map.get(:vars)
-    |> Map.merge(Map.new(Map.get(params, :vars, Keyword.new())))
-    |> Map.to_list()
-    |> Enum.filter(fn(v) -> !is_nil(elem(v, 1)) end)
-    |> Map.new
+    merged_vars =
+      spellbook
+      |> Map.get(:vars)
+      |> Map.merge(Map.new(Map.get(params, :vars, Keyword.new())))
+      |> Map.to_list()
+      |> Enum.filter(fn v -> !is_nil(elem(v, 1)) end)
+      |> Map.new()
 
-    config_files = spellbook.filename_formats
-    |> Enum.flat_map(
-      fn(f) ->
-        Enum.map(spellbook.extensions,
-          fn({e, _}) ->
-            merged_vars = Map.put(merged_vars, :ext, e)
-
-            case Spellbook.Interpolation.interpolate(Spellbook.Interpolation.to_interpolatable(f), merged_vars) do
-              {:ok, interpolated_string} -> interpolated_string
-              {:missing_bindings, _incomplete_string, missing_bindings} ->
-                case spellbook.options.ignore_invalid_filename_formats do
-                  false -> raise ArgumentError, message: "Filename format #{f} missing bindings: #{missing_bindings}"
-                  true ->
-                    # Logger.debug("Skipping filename format: #{f}")
-                    nil
-                end
-            end
+    config_files =
+      spellbook.filename_formats
+      |> Enum.flat_map(fn format ->
+        Enum.map(
+          spellbook.extensions,
+          fn {extension, _} ->
+            interpolate(spellbook, merged_vars, format, extension)
           end
         )
-      end
-    )
-    |> Enum.filter(&(!is_nil(&1)))
+      end)
+      |> Enum.filter(&(!is_nil(&1)))
 
     {config_files, params}
+  end
+
+  defp interpolate(spellbook, merged_vars, format, extension) do
+    merged_vars = Map.put(merged_vars, :ext, extension)
+
+    case Spellbook.Interpolation.interpolate(
+           Spellbook.Interpolation.to_interpolatable(format),
+           merged_vars
+         ) do
+      {:ok, interpolated_string} ->
+        interpolated_string
+
+      {:missing_bindings, _incomplete_string, missing_bindings} ->
+        missing_bindings_handler(spellbook, format, missing_bindings)
+    end
+  end
+
+  defp missing_bindings_handler(spellbook, format, missing_bindings) do
+    case spellbook.options.ignore_invalid_filename_formats do
+      false ->
+        raise ArgumentError,
+          message: "Filename format #{format} missing bindings: #{missing_bindings}"
+
+      true ->
+        # Logger.debug("Skipping filename format: #{format}")
+        nil
+    end
   end
 
   # VARIABLES
@@ -368,20 +403,22 @@ defmodule Spellbook do
   """
   @spec set_vars(spellbook :: %Spellbook{}, values :: maybe_improper_list()) :: %Spellbook{}
   def set_vars(spellbook = %Spellbook{}, values) when is_list(values) do
-    Enum.reduce(values, spellbook, fn(value, spellbook) -> set_var(spellbook, value) end)
+    Enum.reduce(values, spellbook, fn value, spellbook -> set_var(spellbook, value) end)
   end
+
   @doc """
   Sets a variable to be used during filenames list generation using a 2 elements
   tuple.
   """
-  @spec set_var(spellbook :: %Spellbook{}, {name :: String.t, value :: any}) :: %Spellbook{}
+  @spec set_var(spellbook :: %Spellbook{}, {name :: String.t(), value :: any}) :: %Spellbook{}
   def set_var(spellbook = %Spellbook{}, {name, value}) do
     set_var(spellbook, name, value)
   end
+
   @doc """
   Sets a variable to be used during filenames list generation.
   """
-  @spec set_var(spellbook :: %Spellbook{}, name :: String.t, value :: any) :: %Spellbook{}
+  @spec set_var(spellbook :: %Spellbook{}, name :: String.t(), value :: any) :: %Spellbook{}
   def set_var(spellbook = %Spellbook{}, name, value) do
     Map.put(spellbook, :vars, Map.put(Map.get(spellbook, :vars), name, value))
   end
@@ -391,20 +428,22 @@ defmodule Spellbook do
   Sets Spellbook options. Option names are atoms.
 
   Valid options are:
-  * `:folder`: folder where to find the configuration. Defaults to `\#{Path.join(System.cwd(), "config")}`.
+  * `:folder`: folder where to find the configuration. Defaults to `\#{Path.join(File.cwd!(), "config")}`.
   * `:config_filename`: name of the configuration file, default to `"config"`.
   * `:ignore_invalid_filename_formats`: defauts to `true`. Set it to `false` if
   you want to raise an exception if a file in the generated filenames list is not found.
   * `:config`: optional configuration Map or Keyword list to be merged into the
   final configuration. Takes precedence on everything except the environment variables.
   """
-  @spec set_options(spellbook :: %Spellbook{}, options :: nil | list | Map.t) :: %Spellbook{}
+  @spec set_options(spellbook :: %Spellbook{}, options :: nil | list | Map.t()) :: %Spellbook{}
   def set_options(spellbook = %Spellbook{}, options) when is_nil(options) do
     spellbook
   end
+
   def set_options(spellbook = %Spellbook{}, options) when is_list(options) do
     set_options(spellbook, Map.new(options))
   end
+
   def set_options(spellbook = %Spellbook{}, options) when is_map(options) do
     Map.put(spellbook, :options, Map.merge(Map.get(spellbook, :options), options))
   end
@@ -418,7 +457,7 @@ defmodule Spellbook do
       }
       Spellbook.register_extensions(spellbook, extensions)
   """
-  @spec register_extensions(spellbook :: %Spellbook{}, extensions :: Map.t) :: %Spellbook{}
+  @spec register_extensions(spellbook :: %Spellbook{}, extensions :: Map.t()) :: %Spellbook{}
   def register_extensions(spellbook = %Spellbook{}, extensions) do
     Map.put(spellbook, :extensions, Map.merge(spellbook.extensions, extensions))
   end
@@ -431,13 +470,15 @@ defmodule Spellbook do
   def default_config_folder(params) when is_list(params) do
     default_config_folder(%Spellbook{}, Map.new(params))
   end
+
   @doc """
   Sets up the default configuration for reading application configuration from a folder.
   """
-  @spec default_config_folder(params :: Map.t) :: %Spellbook{}
+  @spec default_config_folder(params :: Map.t()) :: %Spellbook{}
   def default_config_folder(params) when is_map(params) do
     default_config_folder(%Spellbook{}, params)
   end
+
   @doc """
   Sets up the default configuration for reading application configuration from a folder.
 
@@ -467,7 +508,7 @@ defmodule Spellbook do
   <CWD>/config/custom-env-variables.{EXT}
   ```
   """
-  @spec default_config_folder(spellbook :: %Spellbook{}, params :: Map.t) :: %Spellbook{}
+  @spec default_config_folder(spellbook :: %Spellbook{}, params :: Map.t()) :: %Spellbook{}
   def default_config_folder(spellbook = %Spellbook{} \\ %Spellbook{}, params \\ %{}) do
     {full_hostname, short_hostname} = get_hostnames()
 
@@ -477,26 +518,22 @@ defmodule Spellbook do
     |> add_filename_format([
       "default.%{ext}",
       "default-%{instance}.%{ext}",
-
       "%{env}.%{ext}",
       "%{env}-%{instance}.%{ext}",
-
       "%{short_hostname}.%{ext}",
       "%{short_hostname}-%{instance}.%{ext}",
       "%{short_hostname}-%{env}.%{ext}",
       "%{short_hostname}-%{env}-%{instance}.%{ext}",
-
       "%{full_hostname}.%{ext}",
       "%{full_hostname}-%{instance}.%{ext}",
       "%{full_hostname}-%{env}.%{ext}",
       "%{full_hostname}-%{env}-%{instance}.%{ext}",
-
       "local.%{ext}",
       "local-%{instance}.%{ext}",
       "local-%{env}.%{ext}",
-      "local-%{env}-%{instance}.%{ext}",
+      "local-%{env}-%{instance}.%{ext}"
     ])
-    |> set_vars([full_hostname: full_hostname, short_hostname: short_hostname])
+    |> set_vars(full_hostname: full_hostname, short_hostname: short_hostname)
     |> set_vars(params[:vars])
     |> set_options(params[:options])
   end
@@ -510,9 +547,11 @@ defmodule Spellbook do
   def default_config(params) when is_list(params) do
     default_config(%Spellbook{}, Map.new(params))
   end
+
   def default_config(params) when is_map(params) do
     default_config(%Spellbook{}, params)
   end
+
   @doc """
   Sets up the default configuration for reading a generic configuration set of files.
 
@@ -531,7 +570,7 @@ defmodule Spellbook do
   <FOLDER>/custom-env-variables.{EXT}
   ```
   """
-  @spec default_config(spellbook :: %Spellbook{}, params :: Map.t) :: %Spellbook{}
+  @spec default_config(spellbook :: %Spellbook{}, params :: Map.t()) :: %Spellbook{}
   def default_config(spellbook = %Spellbook{} \\ %Spellbook{}, params \\ %{}) do
     {full_hostname, short_hostname} = get_hostnames()
 
@@ -545,7 +584,7 @@ defmodule Spellbook do
       "%{config_filename}-%{short_hostname}-%{env}-%{instance}.%{ext}",
       "%{config_filename}-%{full_hostname}-%{env}-%{instance}.%{ext}"
     ])
-    |> set_vars([full_hostname: full_hostname, short_hostname: short_hostname])
+    |> set_vars(full_hostname: full_hostname, short_hostname: short_hostname)
     |> set_vars(params[:vars])
     |> set_options(params[:options])
   end
@@ -554,16 +593,17 @@ defmodule Spellbook do
   @doc """
   Creates a Spellbook with the default config folder filenames list and loads them into a configuration map
   """
-  @spec load_config_folder(params :: Map.t) :: Map.t
+  @spec load_config_folder(params :: Map.t()) :: Map.t()
   def load_config_folder(params \\ %{}) do
     params
     |> default_config_folder()
     |> load_config(params)
   end
+
   @doc """
   Creates a Spellbook with the default config folder filenames list and loads them into a configuration map
   """
-  @spec load_config_folder(spellbook :: %Spellbook{}, params :: Map.t) :: Map.t
+  @spec load_config_folder(spellbook :: %Spellbook{}, params :: Map.t()) :: Map.t()
   def load_config_folder(spellbook = %Spellbook{}, params) do
     spellbook
     |> set_vars(params[:vars])
@@ -574,7 +614,7 @@ defmodule Spellbook do
   @doc """
   Creates a Spellbook with the default config filenames list and loads them into a configuration map.
   """
-  @spec load_default_config(params :: list) :: Map.t
+  @spec load_default_config(params :: list) :: Map.t()
   def load_default_config(params) when is_list(params) do
     params
     |> default_config()
@@ -584,64 +624,68 @@ defmodule Spellbook do
   @doc """
   Loads the configuration files from the provided Spellbook.
   """
-  @spec load_config(spellbook :: %Spellbook{}, params :: maybe_improper_list()) :: Map.t
+  @spec load_config(spellbook :: %Spellbook{}, params :: maybe_improper_list()) :: Map.t()
   def load_config(spellbook = %Spellbook{}, params) when is_list(params) do
     load_config(spellbook, Map.new(params))
   end
+
   @doc """
   Loads the configuration files from the provided Spellbook.
   """
-  @spec load_config(spellbook :: %Spellbook{}, params :: Map.t) :: Map.t
+  @spec load_config(spellbook :: %Spellbook{}, params :: Map.t()) :: Map.t()
   def load_config(spellbook = %Spellbook{}, params) do
     # load and merge available config files
     {config_files, params} = generate(spellbook, params)
-    config_folder = Map.get(params, :folder, Path.join(System.cwd() || __DIR__, "config"))
+    config_folder = Map.get(params, :folder, Path.join(File.cwd!() || __DIR__, "config"))
 
     # load data from files and merge it
-    {_, config} = Enum.map_reduce(
-      config_files,
-      %{},
-      &(load_and_merge_config_file(
-        spellbook,
-        to_string(Path.join(config_folder, &1)),
-        &2)
+    {_, config} =
+      Enum.map_reduce(
+        config_files,
+        %{},
+        &load_and_merge_config_file(
+          spellbook,
+          to_string(Path.join(config_folder, &1)),
+          &2
+        )
       )
-    )
 
     # merge optional :config data
     # TODO: is this in the right position in the code? What should be the priority of this config?
-    config = case Map.get(params, :config) do
-      data when is_map(data) -> deep_merge(config, data)
-      data when is_list(data) -> deep_merge(config, Map.new(data))
-      nil -> config
-    end
+    config =
+      case Map.get(params, :config) do
+        data when is_map(data) -> deep_merge(config, data)
+        data when is_list(data) -> deep_merge(config, Map.new(data))
+        nil -> config
+      end
 
     # load and merge optional ENV vars from <FOLDER>/custom-env-variables.<EXT>
     config = load_and_merge_env_variables_file(spellbook, params, config)
 
-    #TODO: load merge optional CLI parameters defined in <FOLDER>/<CONFIG_FILENAME>-cli-variables.<EXT>
+    # TODO: load merge optional CLI parameters defined in <FOLDER>/<CONFIG_FILENAME>-cli-variables.<EXT>
 
     config
   end
 
   # ENVIRONMENT VARIABLES
   defp load_and_merge_env_variables_file(spellbook = %Spellbook{}, params, config) do
-    config_folder = Map.get(params, :folder, Path.join(System.cwd() || __DIR__, "config"))
+    config_folder = Map.get(params, :folder, Path.join(File.cwd!() || __DIR__, "config"))
     config_env_filename = Map.get(params, :env_filename, @default_env_filename)
 
     # scan all supported extensions
-    {_, config} = Enum.map_reduce(spellbook.extensions, config,
-      fn({ext, _}, config) ->
+    {_, config} =
+      Enum.map_reduce(spellbook.extensions, config, fn {ext, _}, config ->
         filename = Path.join(config_folder, "#{config_env_filename}.#{ext}")
 
         case load_config_file(spellbook, filename) do
           {:ok, data} ->
             env_config = substitute_vars(data, System.get_env())
             {filename, deep_merge(config, env_config)}
-          {:error, _} -> {filename, config}
+
+          {:error, _} ->
+            {filename, config}
         end
-      end
-    )
+      end)
 
     config
   end
@@ -656,18 +700,22 @@ defmodule Spellbook do
     case File.read(filename) do
       {:ok, data} ->
         ext = String.downcase(String.trim_leading(Path.extname(filename), "."))
+
         case Map.get(spellbook.extensions, ext) do
           parser when not is_nil(parser) ->
             apply(parser, :parse, [data])
+
           nil ->
             Logger.debug("Error loading '#{filename}': unsupported file format")
             {:error, "unsupported file format"}
         end
+
       {:error, reason} ->
         case reason do
           :enoent -> nil
           true -> Logger.debug("Error loading '#{filename}': #{reason}")
         end
+
         {:error, reason}
     end
   end
