@@ -64,7 +64,7 @@ Using `Spellbook.load_config_folder/0` by default will use the following filenam
 Spellbook will use the default environment (`{ENV}` = `dev`) and the full hostname of the machine the code gets executed on (`{FULL_HOSTNAME}` = `my-machine.spellbook.domain`). As the other template variables are not defined, the filenames using them are ignored.
 The resulting filenames searched/merged will be:
 
-```
+```txt
 <CWD>/config/default.json
 <CWD>/config/default.yaml
 <CWD>/config/dev.json
@@ -167,6 +167,22 @@ Some situations rely heavily on environment variables to configure secrets and s
 ```
 
 If the `DB_USERNAME` and `DB_PASSWORD` environment variable exist, they would override the values for `database.username` and `database.password` in the configuration.
+
+A special syntax allows environment variables typecast as well:
+
+```json
+{
+  "database": {
+    "port": "DB_PORT.integer"
+  }
+}
+```
+
+Will convert the "DB_PORT" environment variable into an integer. Supported typecasts are:
+
+- "integer" (also "int", "i")
+- "float" (also "f")
+- "boolean" (also "bool", "b"): converts "false", "f", "0" to false, everything else to true.
 
 Custom environment variables have precedence and override all configuration files, including `local.json`.
 

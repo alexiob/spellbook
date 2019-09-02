@@ -2,3 +2,6 @@ deep:
   structure:
     env:
       json: "USER"
+      json_int: "PORT.integer"
+      json_float: "PI.float"
+      json_bool: "ACTIVE.bool"

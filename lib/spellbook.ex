@@ -184,7 +184,6 @@ defmodule Spellbook do
             }
 
   require Logger
-  alias Spellbook.Interpolation
 
   # UTILITIES
 
@@ -262,8 +261,36 @@ defmodule Spellbook do
     substitute_vars(config, vars)
   end
 
-  defp substitute_vars_resolve(_key, config, vars) do
-    Map.get(vars, config, config)
+  defp substitute_vars_resolve(_key, config, vars) when is_binary(config) do
+    # Map.get(vars, config, config)
+
+    case config =~ "." do
+      true ->
+        [config_key, config_type] = String.split(config, ".")
+        value = Map.get(vars, config_key, nil)
+
+        case value do
+          _ when value in ["", nil] -> value
+          _ -> typecast(value, config_type)
+        end
+      false -> Map.get(vars, config, config)
+    end
+  end
+
+  defp typecast(value, config_type) do
+    case config_type do
+      _ when config_type in ["", nil] -> value
+      _ when config_type in ["i", "int", "integer"] -> String.to_integer(value)
+      _ when config_type in ["f", "float"] -> String.to_float(value)
+      _ when config_type in ["b", "bool", "boolean"] -> to_boolean(value)
+    end
+  end
+
+  defp to_boolean(value) when is_binary(value) do
+    case value do
+      value when value in ["f", "0", 0, false, "false"] -> false
+      _ -> true
+    end
   end
 
   defp get_hostnames do
