@@ -3,6 +3,10 @@ defmodule SpellbookTest do
   require Spellbook
   doctest Spellbook, except: [:moduledoc]
 
+  @test_env_port "123"
+  @test_env_pi "3.14"
+  @test_env_active "false"
+
   test "generate" do
     params = %{:vars => [instance: 0, brand: "alexiob", env: "dev"]}
     {config_files, params} = Spellbook.generate(Spellbook.default_config(), params)
@@ -26,6 +30,10 @@ defmodule SpellbookTest do
   end
 
   test "load_config_folder" do
+    System.put_env("PORT", @test_env_port)
+    System.put_env("PI", @test_env_pi)
+    System.put_env("ACTIVE", @test_env_active)
+
     config =
       Spellbook.load_config_folder(
         folder: "./test/support/config",
@@ -42,6 +50,9 @@ defmodule SpellbookTest do
     assert Spellbook.get(config, "from.yaml") == true
     assert Spellbook.get(config, "deep.structure.env.json") != "PATH"
     assert Spellbook.get(config, "deep.structure.env.yaml") != "USER"
+    assert Spellbook.get(config, "deep.structure.env.json_int") == String.to_integer(@test_env_port)
+    assert Spellbook.get(config, "deep.structure.env.json_float") == String.to_float(@test_env_pi)
+    assert Spellbook.get(config, "deep.structure.env.json_bool") == false
   end
 
   test "load_config with custom filename and extra filename format" do

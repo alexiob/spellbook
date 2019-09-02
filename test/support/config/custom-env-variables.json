@@ -1,9 +1,10 @@
 {
-  "deep": {
-    "structure": {
-      "env": {
-        "json": "PATH"
-      }
+    "deep": {
+        "structure": {
+            "env": {
+                "json": "PATH",
+                "json_int": "PORT.integer"
+            }
+        }
     }
-  }
 }
