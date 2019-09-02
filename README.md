@@ -2,7 +2,6 @@
 
 [![Build Status](https://travis-ci.org/alexiob/spellbook.svg?branch=master)](https://travis-ci.org/alexiob/spellbook)
 [![Inline docs](http://inch-ci.org/github/alexiob/spellbook.svg)](http://inch-ci.org/github/alexiob/spellbook)
-[![Deps Status](https://beta.hexfaktor.org/badge/all/github/alexiob/spellbook.svg)](https://beta.hexfaktor.org/github/alexiob/spellbook)
 [![Hex version](https://img.shields.io/hexpm/v/spellbook.svg)](https://hex.pm/packages/spellbook)
 [![Coverage Status](https://coveralls.io/repos/github/alexiob/spellbook/badge.svg?branch=master)](https://coveralls.io/github/alexiob/spellbook?branch=master)
 [![hex.pm downloads](https://img.shields.io/hexpm/dt/spellbook.svg)](https://hex.pm/packages/spellbook)
