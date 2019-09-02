@@ -184,7 +184,7 @@ defmodule Spellbook do
             }
 
   require Logger
-  require Spellbook.Interpolation
+  alias Spellbook.Interpolation
 
   # UTILITIES
 
@@ -328,7 +328,7 @@ defmodule Spellbook do
       |> Spellbook.add_filename_format(["clients/special/%{brand}-%{version}.%{ext}", "clients/external-%{brand}.%{ext}"])
 
   """
-  # @spec add_filename_format(spellbook :: Spellbook, filename_formats :: [String.t]) :: Spellbook
+  @spec add_filename_format(spellbook :: Spellbook, filename_formats :: [String.t()]) :: Spellbook
   def add_filename_format(spellbook, filename_formats) when is_list(filename_formats) do
     current_filename_formats = Map.get(spellbook, :filename_formats, [])
     Map.put(spellbook, :filename_formats, current_filename_formats ++ filename_formats)
@@ -706,14 +706,22 @@ defmodule Spellbook do
             apply(parser, :parse, [data])
 
           nil ->
-            Logger.debug("Error loading '#{filename}': unsupported file format")
+            Logger.debug(fn ->
+              "Error loading '#{filename}': unsupported file format"
+            end)
+
             {:error, "unsupported file format"}
         end
 
       {:error, reason} ->
         case reason do
-          :enoent -> nil
-          true -> Logger.debug("Error loading '#{filename}': #{reason}")
+          :enoent ->
+            nil
+
+          true ->
+            Logger.debug(fn ->
+              "Error loading '#{filename}': #{reason}"
+            end)
         end
 
         {:error, reason}
