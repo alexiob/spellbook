@@ -357,33 +357,44 @@ defmodule Spellbook do
 
     config_files =
       spellbook.filename_formats
-      |> Enum.flat_map(fn f ->
-        Enum.map(spellbook.extensions, fn {e, _} ->
-          merged_vars = Map.put(merged_vars, :ext, e)
-
-          case Interpolation.interpolate(
-                 Interpolation.to_interpolatable(f),
-                 merged_vars
-               ) do
-            {:ok, interpolated_string} ->
-              interpolated_string
-
-            {:missing_bindings, _incomplete_string, missing_bindings} ->
-              case spellbook.options.ignore_invalid_filename_formats do
-                false ->
-                  raise ArgumentError,
-                    message: "Filename format #{f} missing bindings: #{missing_bindings}"
-
-                true ->
-                  # Logger.debug("Skipping filename format: #{f}")
-                  nil
-              end
+      |> Enum.flat_map(fn format ->
+        Enum.map(
+          spellbook.extensions,
+          fn {extension, _} ->
+            interpolate(spellbook, merged_vars, format, extension)
           end
-        end)
+        )
       end)
       |> Enum.filter(&(!is_nil(&1)))
 
     {config_files, params}
+  end
+
+  defp interpolate(spellbook, merged_vars, format, extension) do
+    merged_vars = Map.put(merged_vars, :ext, extension)
+
+    case Spellbook.Interpolation.interpolate(
+           Spellbook.Interpolation.to_interpolatable(format),
+           merged_vars
+         ) do
+      {:ok, interpolated_string} ->
+        interpolated_string
+
+      {:missing_bindings, _incomplete_string, missing_bindings} ->
+        missing_bindings_handler(spellbook, format, missing_bindings)
+    end
+  end
+
+  defp missing_bindings_handler(spellbook, format, missing_bindings) do
+    case spellbook.options.ignore_invalid_filename_formats do
+      false ->
+        raise ArgumentError,
+          message: "Filename format #{format} missing bindings: #{missing_bindings}"
+
+      true ->
+        # Logger.debug("Skipping filename format: #{format}")
+        nil
+    end
   end
 
   # VARIABLES
@@ -417,7 +428,7 @@ defmodule Spellbook do
   Sets Spellbook options. Option names are atoms.
 
   Valid options are:
-  * `:folder`: folder where to find the configuration. Defaults to `\#{Path.join(System.cwd(), "config")}`.
+  * `:folder`: folder where to find the configuration. Defaults to `\#{Path.join(File.cwd!(), "config")}`.
   * `:config_filename`: name of the configuration file, default to `"config"`.
   * `:ignore_invalid_filename_formats`: defauts to `true`. Set it to `false` if
   you want to raise an exception if a file in the generated filenames list is not found.
@@ -625,14 +636,18 @@ defmodule Spellbook do
   def load_config(spellbook = %Spellbook{}, params) do
     # load and merge available config files
     {config_files, params} = generate(spellbook, params)
-    config_folder = Map.get(params, :folder, Path.join(System.cwd() || __DIR__, "config"))
+    config_folder = Map.get(params, :folder, Path.join(File.cwd!() || __DIR__, "config"))
 
     # load data from files and merge it
     {_, config} =
       Enum.map_reduce(
         config_files,
         %{},
-        &load_and_merge_config_file(spellbook, to_string(Path.join(config_folder, &1)), &2)
+        &load_and_merge_config_file(
+          spellbook,
+          to_string(Path.join(config_folder, &1)),
+          &2
+        )
       )
 
     # merge optional :config data
@@ -654,7 +669,7 @@ defmodule Spellbook do
 
   # ENVIRONMENT VARIABLES
   defp load_and_merge_env_variables_file(spellbook = %Spellbook{}, params, config) do
-    config_folder = Map.get(params, :folder, Path.join(System.cwd() || __DIR__, "config"))
+    config_folder = Map.get(params, :folder, Path.join(File.cwd!() || __DIR__, "config"))
     config_env_filename = Map.get(params, :env_filename, @default_env_filename)
 
     # scan all supported extensions

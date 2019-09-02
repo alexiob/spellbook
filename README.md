@@ -1,15 +1,13 @@
-Spellbook
-=========
-[![Build Status](https://travis-ci.org/alexiob/spellbook.svg?branch=master)]
-(https://travis-ci.org/alexiob/spellbook)
+# Spellbook
+
+[![Build Status](https://travis-ci.org/alexiob/spellbook.svg?branch=master)](https://travis-ci.org/alexiob/spellbook)
 [![Inline docs](http://inch-ci.org/github/alexiob/spellbook.svg)](http://inch-ci.org/github/alexiob/spellbook)
 [![Deps Status](https://beta.hexfaktor.org/badge/all/github/alexiob/spellbook.svg)](https://beta.hexfaktor.org/github/alexiob/spellbook)
 [![Hex version](https://img.shields.io/hexpm/v/spellbook.svg)](https://hex.pm/packages/spellbook)
 [![Coverage Status](https://coveralls.io/repos/github/alexiob/spellbook/badge.svg?branch=master)](https://coveralls.io/github/alexiob/spellbook?branch=master)
 [![hex.pm downloads](https://img.shields.io/hexpm/dt/spellbook.svg)](https://hex.pm/packages/spellbook)
 
-Introduction
-------------
+## Introduction
 
 Spellbook is an Elixir library providing dynamic hierarchical configurations loading for your application.
 It is based on the ideas implemented in the Javascript [node-config](https://nodei.co/npm/config/) module.
@@ -20,8 +18,7 @@ Configurations are stored in default or custom folders containing configuration 
 
 Custom configuration static and dynamic filenames and file formats can be added as needed.
 
-Installation
-------------
+## Installation
 
 Add Spellbook as a dependency to your `mix.exs` file.
 
@@ -31,15 +28,13 @@ defp deps do
 end
 ```
 
-Documentation
--------------
-The API reference can be found [here](https://hexdocs.pm/spellbook/api-reference.html).
+## Documentation
 
+The API reference can be found [here](https://hexdocs.pm/dumballah/api-reference.html).
 
-Quick Start
------------
+## Quick Start
 
-**Read the configuration files from the standard `<CWD>/config` folder**
+### Read the configuration files from the standard `<CWD>/config` folder
 
 ```elixir
 config = Spellbook.load_config_folder()
@@ -47,7 +42,7 @@ config = Spellbook.load_config_folder()
 
 Using `Spellbook.load_config_folder/0` by default will use the following filename templates (in the listed order and if they exist) with the `{SOMETHING}` template variables substituted:
 
-```
+```txt
 <CWD>/config/default.{EXT}
 <CWD>/config/default-{INSTANCE}.{EXT}
 <CWD>/config/{ENV}.{EXT}
@@ -67,7 +62,7 @@ Using `Spellbook.load_config_folder/0` by default will use the following filenam
 <CWD>/config/custom-env-variables.{EXT}
 ```
 
-Spellbook will use the default  environment (`{ENV}` = `dev`) and the full hostname of the machine the code gets executed on (`{FULL_HOSTNAME}` = `my-machine.spellbook.domain`). As the other template variables are not defined, the filenames using them are ignored. 
+Spellbook will use the default environment (`{ENV}` = `dev`) and the full hostname of the machine the code gets executed on (`{FULL_HOSTNAME}` = `my-machine.spellbook.domain`). As the other template variables are not defined, the filenames using them are ignored.
 The resulting filenames searched/merged will be:
 
 ```
@@ -89,7 +84,7 @@ The resulting filenames searched/merged will be:
 
 By default Spellbook supports JSON and YAML file formats.
 
-**Read brand's configuration from a specific folder with custom settings for a specific client**
+### Read brand's configuration from a specific folder with custom settings for a specific client
 
 ```elixir
 config = Spellbook.default_config()
@@ -101,11 +96,11 @@ config = Spellbook.default_config()
 )
 ```
 
-Here we specify a specific folder were to look for the configuration files (with the `folder` option), a custom configuration file name (with the `config_filename` option). The `vars` configuration field is used to define the variable values used in the filename templates. 
+Here we specify a specific folder were to look for the configuration files (with the `folder` option), a custom configuration file name (with the `config_filename` option). The `vars` configuration field is used to define the variable values used in the filename templates.
 
 The `Spellbook.default_config/0` function (and the `Spellbook.load_config/0` one as well) configures the Spellbook to search for the following file templates:
 
-```
+```txt
 ./test/support/brand/{CONFIG\_FILENAME}.{EXT}
 ./test/support/brand/{CONFIG\_FILENAME}-{INSTANCE}.{EXT}
 ./test/support/brand/{CONFIG\_FILENAME}-{ENV}.{EXT}
@@ -117,7 +112,7 @@ The `Spellbook.default_config/0` function (and the `Spellbook.load_config/0` one
 
 In this case the searched/merged files will be:
 
-```
+```txt
 ./test/support/brand/brand-conf.json
 ./test/support/brand/brand-conf.yaml
 ./test/support/brand/brand-conf-job-processor.json
@@ -134,7 +129,7 @@ In this case the searched/merged files will be:
 ./test/support/brand/custom-env-variables.yaml
 ```
 
-**Get a value out of a Spellbook configuration**
+### Get a value out of a Spellbook configuration
 
 A configuration is just a Map.
 
@@ -159,7 +154,7 @@ iex> value = Spellbook.get(config, "some.value.from.config")
 "a value"
 ```
 
-**Use environment variables in configuration files**
+### Use environment variables in configuration files
 
 Some situations rely heavily on environment variables to configure secrets and settings best left out of a codebase. Spellbook lets you use map the environment variable names into your configuration structure using a `custom-env-variables.{EXT}` file:
 
@@ -176,7 +171,6 @@ If the `DB_USERNAME` and `DB_PASSWORD` environment variable exist, they would ov
 
 Custom environment variables have precedence and override all configuration files, including `local.json`.
 
-License
--------
+## License
 
 Spellbook is provided under the [MIT license](LICENSE)
