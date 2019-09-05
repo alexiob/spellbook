@@ -23,7 +23,7 @@ Add Spellbook as a dependency to your `mix.exs` file.
 
 ```elixir
 defp deps do
-  [{:spellbook, github: "alexiob/spellbook"}]
+  [{:spellbook, "~> 2.0.3"}]
 end
 ```
 
